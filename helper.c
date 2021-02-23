@@ -35,6 +35,12 @@ void HexDump(void*, int size)
 
 }
 
+
+//FixShortFile tests
+char* filename1 = "filenametxtAAAAAA"; // "filename.txt"
+char* filename2 = "file    docBBBBBB"; // "file.doc"
+char* filename3 = "my_dir     CCCCCC"; // "my_dir"
+
 // Alex
 // Fixes up the name of data in our Fat Table. Note that this is only designed for short file. 
 // Short files can only contain a file name with a max size of 8, and a extension name with a max size of 3.
