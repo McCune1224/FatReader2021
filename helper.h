@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 char* FileAttributes(uint8_t);
-char* AsHumanSize(int bytes);
+char* AsHumanSize(uint64_t bytes);
 char* MediaType(uint8_t);
 char* PartitionTypeName(uint8_t);
 void HexDump(void*, int size);
