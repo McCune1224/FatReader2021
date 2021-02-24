@@ -2,7 +2,7 @@
 #define HELPER_HEADER
 #include <stdint.h>
 
-char* FileAttributes(uint8_t);
+char* FileAttributes(uint8_t byte);
 char* AsHumanSize(int bytes);
 char* MediaType(uint8_t);
 char* PartitionTypeName(uint8_t);
