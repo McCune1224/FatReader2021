@@ -30,9 +30,27 @@ char* PartitionTypeName(uint8_t)
 
 // Ali
 // Reads data at memory address (void*) till the end of given size, then dumps the hex values. Here is an example output:
-void HexDump(void*, int size)
+void HexDump(void* addr, int size)
 {
-
+	char* test = '';
+	int length = 16;
+	
+	if(size <= 0)
+	{
+		printf("invalid size")
+		return;
+	
+	for(int i = 0; i <size; i++;)
+	{
+		if(i % 8 == 0)
+		{
+			printf("\n")
+		}
+		
+		
+		
+	}
+	
 }
 
 // Alex
