@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
+
 #include "helper.h"
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -66,15 +71,67 @@ char* FileAttributes(uint8_t byte)
 
 // Yunhu
 // Turns input parameter "int bytes" into a more human friendly readable string.
-char* AsHumanSize(int bytes)
+char* AsHumanSize(uint64_t bytes)
 {
+	static char str[20] = "";
+	char* readable_string;	
+	float readable_num = 0;
+	readable_num = bytes / 1024;
+	if (readable_num <= 1024)
+	{
+		sprintf(str, "%.2f", readable_num);
+		strcat(str, "B");
+	}
 
+	else if (readable_num > 1024 && readable_num < 1048576)
+	{
+		readable_num = readable_num / 1024;
+		sprintf(str, "%.2f", readable_num);
+		strcat(str, "MB");
+	}
+
+	else if (readable_num >= 1048576)
+	{
+		readable_num = readable_num / 1024;
+		readable_num = readable_num / 1024;
+		sprintf(str, "%.2f", readable_num);
+		strcat(str, "GB");
+	}
+	readable_string = str;
+	return readable_string;
 }
 
-// Yunhu
-// Read input parameter of 1 byte and returns the media type. Examples: HDD, Floppy, Disc, etc.
+//// Yunhu
+//// Read input parameter of 1 byte and returns the media type. Examples: HDD, Floppy, Disc, etc.
 char* MediaType(uint8_t byte)
 {
+	switch (byte)
+	{
+		case 0xE5: return "8-inch single sided floppy";
+			break;
+		case 0xED: return "5.25-inch double sided floppy.";
+			break;
+		case 0xF0: return "3.5-inch double sided floppy.";
+			break;
+		case 0xF5: return "4-sided fixed disk.";
+			break;
+		case 0xF8: return "Fixed disk. 3.5-inch single sided floppy. 5.25-inch double sided floppy.";
+			break;
+		case 0xF9: return "3.5-inch double sided floppy.";
+			break;
+		case 0xFA: return "3.5-inch and 5.25-inch single sided floppy.";
+			break;
+		case 0xFB: return "3.5-inch and 5.25-inch double sided floppy.";
+			break;
+		case 0xFC: return "5.25-inch single sided floppy.";
+			break;
+		case 0xFD: return "5.25-inch double sided floppy. 8-inch double sided floppy. ";
+			break;
+		case 0xFE: return "5.25-inch single sided floppy. 8-inch single sided floppy. 8-inch double sided floppy.";
+			break;
+		case 0xFF: return "5.25-inch double sided floppy.";
+			break;
+	}
 
 }
 
@@ -112,7 +169,7 @@ char* PartitionTypeName(uint8_t PartitionType)
 // Reads data at memory address (void*) till the end of given size, then dumps the hex values. Here is an example output:
 void HexDump(void* memory, int size)
 {
-
+  
 }
 
 // Alex
@@ -120,5 +177,5 @@ void HexDump(void* memory, int size)
 // Short files can only contain a file name with a max size of 8, and a extension name with a max size of 3.
 void FixShortFile(void* memory)
 {
-
+  
 }
