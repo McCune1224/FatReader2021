@@ -167,9 +167,54 @@ char* PartitionTypeName(uint8_t PartitionType)
 
 // Ali
 // Reads data at memory address (void*) till the end of given size, then dumps the hex values. Here is an example output:
-void HexDump(void* memory, int size)
+void hexDump(void *addr, int size)
 {
-  
+    int i;
+    char temp[17];
+    unsigned char *x = (unsigned char*)addr;
+
+    
+
+    // Process every byte in the data.
+    for (i = 0; i < size; i++) 
+    {
+       
+        // Multiple of 8 means new line (with line offset).
+        if ((i % 8) == 0) 
+        {
+            // Padding for proper formatting
+            if (i != 0){
+                printf("  %s\n", temp);}
+               
+            // Address offset on the left side
+            printf("  %08x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf(" %02x", x[i]);
+
+        // If current character is not ASCII then store it as '?'
+        //  from  (space) --------->  (~) in ASCII 
+        if ((x[i] < 0x20) || (x[i] > 0x7e)) 
+        {
+            temp[i % 8] = '.';
+        } 
+        else 
+        {
+            temp[i % 8] = x[i];
+        }
+        // Add a Null terminator to the end of the line so it can be printed
+        temp[(i % 8) + 1] = '\0';
+    }
+
+    // Pad out last line if not exactly 8 characters.
+    while ((i % 8) != 0) {
+        printf("   ");
+        i++;
+    }
+
+    // And print the final ASCII bit.
+    printf("  %s\n", temp);
 }
 
 // Alex
