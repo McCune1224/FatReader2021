@@ -20,5 +20,8 @@ int main(int argc, char* argv[])
 	uint64_t bytesBeforeConverted = 47281957121;
 	printf("%s\n", AsHumanSize(bytesBeforeConverted));
 	uint8_t byte = 0xE5;
-	printf("%s", MediaType(byte));
+	printf("%s\n", MediaType(byte));
+
+	char* dumpTest = "\x00\x00Test...?..sdjfasjdfj\0asd;lasm;d\x00\x001,,0maks,";
+	hexDump(dumpTest, 32);
 }
