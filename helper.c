@@ -44,7 +44,26 @@ char* filename3 = "my_dir     CCCCCC"; // "my_dir"
 // Alex
 // Fixes up the name of data in our Fat Table. Note that this is only designed for short file. 
 // Short files can only contain a file name with a max size of 8, and a extension name with a max size of 3.
-void FixShortFile(void*)
+void FixShortFile(void *rawFilename)
 {
+    char *pRawFileName = rawFilename;
+    char fullFileName[12] = {'\0'};
 
+    memcpy(fullFileName, pRawFileName, 12);
+    printf("Modifying: |%s|\n", fullFileName);
+
+
+    fullFileName[11] = '\0';
+    printf("Result: |%s|\n",fullFileName);
+    if (fullFileName[8] == ' ')
+    {
+        printf("Is a Directory.");
+    }
+    else
+    {
+        printf("Is a .%c%c%c File", fullFileName[8],fullFileName[9],fullFileName[10]);
+    }
+    int count = 0;
 }
+
+
