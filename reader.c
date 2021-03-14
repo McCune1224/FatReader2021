@@ -27,7 +27,10 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         return NULL;
     }
 
-    char* buffer = (char*)malloc(fat_sectors);
+    int x = count*(fat_sectors * sector_size);
+    //        count * 1 Fat Table
+
+    char* buffer = (char*)malloc(x);
     
     //fail
     if (buffer = NULL)
@@ -35,17 +38,19 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         printf("f");
         return NULL;
     }
-    int read = fread(buffer, 1, sector_size, fp);
-    if (read < count)
+
+    int read = fread(buffer, 1, x, fp);
+
+    if (read < x)
     {
         printf("f");
         return NULL;
     }
-
+    
+    printf("%x",(FAT_TABLE*)buffer);
     return (FAT_TABLE*)buffer;
-    printf((FAT_TABLE*)buffer);
 }
-/* TESTING
+/*
 int main(int argc, char* argv[])
 {
     char* filename = "dfr-16-fat.dd";
