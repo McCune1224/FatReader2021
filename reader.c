@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "reader.h"
 
 int ReadDiskImage(char* filename)
@@ -21,7 +22,31 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     return NULL;
 }
 
-ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
+ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
-    return NULL;
+    int size = count * sizeof(ROOT_ENTRY);
+
+    char* buffer = (char*)malloc(size);
+    
+    int seek_rc = fseek(fp, offset, SEEK_SET);
+    if (seek_rc != 0)
+    {
+        printf("seek failed");
+        return NULL;
+    }
+
+
+    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+    if (read_rc != count)
+    {
+        printf("read failed");
+        printf("size: %d", size);
+        printf("///%d", read_rc);
+    }
+
+    printf("-------------------------------------\n");
+    printf("%x", (ROOT_ENTRY*)buffer);
+    printf("-------------------------------------");
+    return (ROOT_ENTRY*)buffer;
 }
+
