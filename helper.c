@@ -34,34 +34,34 @@ char* FileAttributes(uint8_t byte)
             switch(i)
             {
                 case 0:
-                    strcat(result, "ReadOnly|");
+                    strcat(result, "RO|");//Read Only
                     break;
                 case 1:
-                    strcat(result, "Hidden|");
+                    strcat(result, "H|");//Hidden
                     break;
                 case 2:
-                    strcat(result, "System|");
+                    strcat(result, "S|");//System
                     break;
                 case 3:
-                    strcat(result, "VolumeLabel|");
+                    strcat(result, "V|");//Volume Label
                     break;
                 case 4:
-                    strcat(result, "Directory|");
+                    strcat(result, "Dir|");//Directory
                     break;
                 case 5:
-                    strcat(result, "Archive|");
+                    strcat(result, "A|");//Archive
                     break;
                 case 6:
-                    strcat(result, "Device|");
+                    strcat(result, "D|");//Device
                     break;
                 case 7:
-                    strcat(result, "Reserved|");
+                    strcat(result, "R|");//Reserved
                     break;
             }
         }
         else
         {
-            strcat(result, "X|");
+            strcat(result, "*|");
         }
     }
 
@@ -107,29 +107,29 @@ char* MediaType(uint8_t byte)
 {
 	switch (byte)
 	{
-		case 0xE5: return "8-inch single sided floppy";
+		case 0xE5: return "Floppy";
 			break;
-		case 0xED: return "5.25-inch double sided floppy.";
+		case 0xED: return "Floppy";
 			break;
-		case 0xF0: return "3.5-inch double sided floppy.";
+		case 0xF0: return "Floppy";
 			break;
-		case 0xF5: return "4-sided fixed disk.";
+		case 0xF5: return   "Disk";
 			break;
-		case 0xF8: return "Fixed disk. 3.5-inch single sided floppy. 5.25-inch double sided floppy.";
+		case 0xF8: return   "Disk";
 			break;
-		case 0xF9: return "3.5-inch double sided floppy.";
+		case 0xF9: return "Floppy";
 			break;
-		case 0xFA: return "3.5-inch and 5.25-inch single sided floppy.";
+		case 0xFA: return "Floppy";
 			break;
-		case 0xFB: return "3.5-inch and 5.25-inch double sided floppy.";
+		case 0xFB: return "Floppy";
 			break;
-		case 0xFC: return "5.25-inch single sided floppy.";
+		case 0xFC: return "Floppy";
 			break;
-		case 0xFD: return "5.25-inch double sided floppy. 8-inch double sided floppy. ";
+		case 0xFD: return "Floppy";
 			break;
-		case 0xFE: return "5.25-inch single sided floppy. 8-inch single sided floppy. 8-inch double sided floppy.";
+		case 0xFE: return "Floppy";
 			break;
-		case 0xFF: return "5.25-inch double sided floppy.";
+		case 0xFF: return "Floppy";
 			break;
 	}
 
@@ -180,7 +180,7 @@ void hexDump(void *addr, int size)
     {
        
         // Multiple of 8 means new line (with line offset).
-        if ((i % 8) == 0) 
+        if ((i % 16) == 0) 
         {
             // Padding for proper formatting
             if (i != 0){
@@ -207,8 +207,8 @@ void hexDump(void *addr, int size)
         temp[(i % 8) + 1] = '\0';
     }
 
-    // Pad out last line if not exactly 8 characters.
-    while ((i % 8) != 0) {
+    // Pad out last line if not exactly 16 characters.
+    while ((i % 16) != 0) {
         printf("   ");
         i++;
     }
