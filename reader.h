@@ -26,9 +26,10 @@ typedef struct FAT_BOOT
 }__attribute__((packed)) FAT_BOOT;
 
 // Fat Table
+typedef uint16_t FAT_TABLE_ENTRY;
 typedef struct FAT_TABLE
 {
-	uint16_t Table[0];
+	FAT_TABLE_ENTRY Table[0];
 }__attribute__((packed)) FAT_TABLE;
 
 // Root Directory
