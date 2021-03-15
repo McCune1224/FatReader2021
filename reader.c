@@ -18,36 +18,38 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
 {
-    int rc = fseek(fp, offset, SEEK_SET);
+    int seek_rc = fseek(fp, offset, SEEK_SET);
 
     //fail
-    if(rc != 0)
+    if(seek_rc != 0)
     {
         printf("f");
         return NULL;
     }
 
-    int x = count*(fat_sectors * sector_size);
-    //        count * 1 Fat Table
+    int size = count*(fat_sectors * sector_size);
+    //        count * 1 Fat Table Entry
 
-    char* buffer = (char*)malloc(x);
-    
+    char* buffer = (char*)malloc(size);
+        
     //fail
-    if (buffer = NULL)
+    if (buffer == NULL)
     {
         printf("f");
         return NULL;
     }
 
-    int read = fread(buffer, 1, x, fp);
+    int read_rc = fread(buffer, 1, size, fp);
 
-    if (read < x)
+    //fail
+    if (read_rc < size)
     {
         printf("f");
+        free(buffer);
         return NULL;
     }
     
-    printf("%x",(FAT_TABLE*)buffer);
+    //printf("%x",(FAT_TABLE*)buffer);
     return (FAT_TABLE*)buffer;
 }
 /*
