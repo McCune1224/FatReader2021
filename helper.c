@@ -20,8 +20,8 @@
 // Turns input parameter of "1 byte" into a more human friendly readable string
 char* FileAttributes(uint8_t byte)
 {
-    char* bitchar;
-    asprintf(&bitchar, BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(byte));
+    char* bitchar = malloc(8 * sizeof(char));
+    sprintf(bitchar, BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(byte));
     printf(bitchar);
 
     char* result = malloc(80);
