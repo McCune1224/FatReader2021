@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "reader.h"
+#include "helper.h"
 
 int ReadDiskImage(char* filename)
 {
@@ -34,7 +35,7 @@ int ReadDiskImage(char* filename)
     }
 
     // Root Directory
-    ROOT_ENTRY* root = ReadFatRootDirectory(fp, 10000, count);
+    ROOT_DIR* root = ReadFatRootDirectory(fp, 10000, count);
     if(root == NULL)
     {
         printf("ERROR: ReadFatRootDirectory Failed\n");
@@ -62,6 +63,12 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
     }
     
     int total_count = fread(buffer, 1, sizeof(MBR), fp); 
+    HexDump(buffer, total_count);
+    printf("----------------------------\n");
+    int total_count2 = fread(buffer, 1, sizeof(MBR), fp); 
+    HexDump(buffer, total_count2);
+    printf("%d\n", total_count2);
+
     if (total_count < sizeof(MBR)) //if the total count is less than the size of MBR, it wont be able to read the contents of the file
     {
         printf("The contents of the file are not able to be read\n");
@@ -113,79 +120,13 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     return (FAT_TABLE*)buffer;
 }
 
-ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
-{
-    int size = count * sizeof(ROOT_ENTRY);
-
-    char* buffer = (char*)malloc(size);
-    //                 |
-    //Error Check here v
-    
-    
-    int seek_rc = fseek(fp, offset, SEEK_SET);
-    if (seek_rc != 0)
-    {
-        printf("seek failed");
-        free(buffer);
-        return NULL;
-    }
-
-
-    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
-    if (read_rc != count)
-    {
-        printf("read failed");
-        printf("size: %d", size);
-        printf("///%d", read_rc);
-        free(buffer);
-        return NULL;
-    }
-
-<<<<<<< HEAD
-=======
-ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
-{
-    int size = count * sizeof(ROOT_ENTRY);
-
-    char* buffer = (char*)malloc(size);
-    //                 |
-    //Error Check here v
-    
-    
-    int seek_rc = fseek(fp, offset, SEEK_SET);
-    if (seek_rc != 0)
-    {
-        printf("seek failed");
-        free(buffer);
-        return NULL;
-    }
-
-
-    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
-    if (read_rc != count)
-    {
-        printf("read failed");
-        printf("size: %d", size);
-        printf("///%d", read_rc);
-        free(buffer);
-        return NULL;
-    }
-
->>>>>>> 653949fd0f1b76401cbad25556a561328bdd8db1
-    //printf("-------------------------------------\n");
-    //printf("%x", (ROOT_ENTRY*)buffer);
-    //printf("-------------------------------------");
-    return (ROOT_DIR*)buffer;
-}
-
-//ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
+//ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 //{
 //    int size = count * sizeof(ROOT_ENTRY);
 
 //    char* buffer = (char*)malloc(size);
     //                 |
     //Error Check here v
-    
     
 //    int seek_rc = fseek(fp, offset, SEEK_SET);
 //    if (seek_rc != 0)
@@ -199,7 +140,7 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 //    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
 //    if (read_rc != count)
 //    {
-//        printf("read failed");
+//       printf("read failed");
 //        printf("size: %d", size);
 //        printf("///%d", read_rc);
 //        free(buffer);
@@ -209,5 +150,38 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
     //printf("-------------------------------------\n");
     //printf("%x", (ROOT_ENTRY*)buffer);
     //printf("-------------------------------------");
-//    return (ROOT_DIR*)buffer;
+//    return (ROOT_ENTRY*)buffer;
 //}
+
+ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
+{
+   int size = count * sizeof(ROOT_ENTRY);
+
+   char* buffer = (char*)malloc(size);
+   //                 |
+   //Error Check here v
+    
+    
+   int seek_rc = fseek(fp, offset, SEEK_SET);
+   if (seek_rc != 0)
+   {
+       printf("seek failed");
+       free(buffer);
+       return NULL;
+   }
+
+   int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+   if (read_rc != count)
+   {
+       printf("read failed");
+       printf("size: %d", size);
+       printf("///%d", read_rc);
+       free(buffer);
+       return NULL;
+   }
+
+    //printf("-------------------------------------\n");
+    //printf("%x", (ROOT_ENTRY*)buffer);
+    //printf("-------------------------------------");
+   return (ROOT_DIR*)buffer;
+}
