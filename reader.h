@@ -17,6 +17,9 @@ typedef struct _PARTITION
 // Master Boot Record
 typedef struct _MBR
 {
+	uint8_t bootloader[446]; //bootloader of MBR starts with 446 bytes
+	PARTITION list[4]; //There are 4 partitions(each one is 16 bytes each)
+	uint16_t bootsignature; //using uint16_t as the boot signature is 2 bytes
 
 }__attribute__((packed)) MBR;
 
@@ -27,9 +30,10 @@ typedef struct FAT_BOOT
 }__attribute__((packed)) FAT_BOOT;
 
 // Fat Table
+typedef uint16_t FAT_TABLE_ENTRY;
 typedef struct FAT_TABLE
 {
-	
+	FAT_TABLE_ENTRY Table[0];
 }__attribute__((packed)) FAT_TABLE;
 
 // Root Entry
@@ -55,7 +59,7 @@ typedef struct ROOT_ENTRY
 
 
 int ReadDiskImage(char* filename);
-MBR* ReadMsterBootRecord(FILE* fp, long int offset);
+MBR* ReadMasterBootRecord(FILE* fp, long int offset);
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
 ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count);
