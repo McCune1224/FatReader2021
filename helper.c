@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-
 #include "helper.h"
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -23,7 +22,7 @@ char* FileAttributes(uint8_t byte)
     char* bitchar;
     asprintf(&bitchar, BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(byte));
     printf(bitchar);
-
+    
     char* result = malloc(80);
     strcat(result, "|");
 

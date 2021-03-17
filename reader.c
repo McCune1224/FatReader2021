@@ -1,15 +1,18 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "reader.h"
 
 
 int ReadDiskImage(char* filename)
 {
-    return NULL;
+    FILE* fp;
+    fp = fopen(filename, "r");
+    MBR* mbr;
+    mbr = ReadMasterBootRecord(fp, 0);
 }
 
-MBR* ReadMsterBootRecord(FILE* fp, long int offset)
+MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 {
-    
     int seek_rc = fseek(fp, offset, SEEK_SET);
     if (seek_rc != 0) //if fseek equals 0, it is then successful. If it returns a nonzero, it has failed
     {

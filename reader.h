@@ -41,7 +41,7 @@ typedef struct ROOT_DIR
 }__attribute__((packed)) ROOT_DIR;
 
 int ReadDiskImage(char* filename);
-MBR* ReadMsterBootRecord(FILE* fp, long int offset);
+MBR* ReadMasterBootRecord(FILE* fp, long int offset);
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
