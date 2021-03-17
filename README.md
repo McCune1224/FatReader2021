@@ -17,7 +17,7 @@ Team Members:
 # Helper Functions
 
 ```c
-[ ] Luke char*FileAttributes(uint8_t): 
+[X] Luke char*FileAttributes(uint8_t): 
 
 Turns input parameter of "1 byte" into a more human friendly readable string
 
@@ -28,7 +28,7 @@ Example:
 ```
 
 ```c
-[ ] Yunhu char* AsHumanSize(int bytes):
+[X] Yunhu char* AsHumanSize(int bytes):
 
 Turns input parameter "int bytes" into a more human friendly readable string. For example:
 
@@ -41,7 +41,7 @@ Turns input parameter "int bytes" into a more human friendly readable string. Fo
 ```
 
 ```c
-[ ] Yunhu char* MediaType(uint8_t):
+[X] Yunhu char* MediaType(uint8_t):
 
 Read input parameter of 1 byte and returns the media type. Examples: HDD, Floppy, Disc, etc.
 
@@ -50,7 +50,7 @@ Read input parameter of 1 byte and returns the media type. Examples: HDD, Floppy
 ```
 
 ```c
-[ ] Kevin char* PartitionTypeName(uint8_t):
+[X] Kevin char* PartitionTypeName(uint8_t):
 
 Reads input parameter of 1 byte and responds with telling us the File System. For example, reading the byte will tell us if the file system is FAT16, FAT32, NTFS, etc.
 
@@ -65,13 +65,13 @@ Example:
 ```
 
 ```c
-[ ] Ali void HexDump(void*, int size):
+[X] Ali void HexDump(void*, int size):
 
 Reads data at memory address (void*) till the end of given size, then dumps the hex values
 ```
 
 ```c
-[] Alex void FixShortFile(void*):
+[X] Alex void FixShortFile(void*):
 
 Fixes up the name of data in our Fat Table. Note that this is only designed for short files. Short files can only contain a file name with a max size of 8, and an extension name with a max size of 3.
 
