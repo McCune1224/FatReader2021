@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-//#include "helper.h"
+#include "helper.h"
 #include "reader.h"
 
 uint8_t attributeNum = 235; // 11101011 eb
@@ -54,5 +54,16 @@ int main(int argc, char* argv[])
     //FAT_TABLE* fat = ReadFatTable(fin, offsetToFatTable, count, fat_sectors, sector_size);
 	//printf("data: %08x\n", *(unsigned int*)fat);
 
-	return 0;
+    char *filename1 = "filenametxtAAAAAA"; // "filename.txt"
+	char *filename2 = "file    docBBBBBB"; // "file.doc"
+	char *filename3 = "my_dir     CCCCCC"; // "my_dir"
+
+	printf("\nFile Test:\n");
+	printf("%s\n", FixShortFile(filename1));
+	printf("File 2 Test:\n");
+	printf("%s\n", FixShortFile(filename2));
+	printf("Dir Test:\n");
+	printf("%s\n", FixShortFile(filename3));
+
+    return 0;
 }
