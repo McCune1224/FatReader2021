@@ -2,13 +2,47 @@
 #include <stdlib.h>
 #include "reader.h"
 
-
 int ReadDiskImage(char* filename)
 {
-    FILE* fp;
-    fp = fopen(filename, "r");
-    MBR* mbr;
-    mbr = ReadMasterBootRecord(fp, 0);
+    // File Open
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+        printf("Error: Could not open binary file '%s'\n", filename);
+        return 1;
+    }
+
+    // Master Boot Record
+    MBR* mbr = ReadMasterBootRecord(fp, 0);
+    if(mbr == NULL)
+    {
+        printf("ERROR: ReadMasterBootRecord Failed\n");
+        //return 1;
+    }
+
+    // Fat Table
+    int offsetToFatTable = 0x810800; // taken from hex dump (unique to this image)
+    int count = 2;                   // taken from boot sector as seen in hex dump (pretty standard)
+    int fat_sectors = 254;           // taken from boot sector as seen in hex dump (unique to this image)
+    int sector_size = 512;           // taken from boot sector as seen in hex dump (pretty standard)
+
+    FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
+    if(fat == NULL) 
+    {
+        printf("ERROR: ReadFatTable Failed\n");
+        //return 1;
+    }
+
+    // Root Directory
+    ROOT_ENTRY* root = ReadFatRootDirectory(fp, 10000, count);
+    if(root == NULL)
+    {
+        printf("ERROR: ReadFatRootDirectory Failed\n");
+        //return 1;
+    }
+
+    fclose(fp);
+    return 0;
 }
 
 MBR* ReadMasterBootRecord(FILE* fp, long int offset)
@@ -49,7 +83,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //Fat Table Seek Error
     if(seek_rc != 0)
     {
-        printf("Could not find the data at given offset, %i", offset);
+        printf("Could not find the data at given offset, %i\n", offset);
         return NULL;
     }
 
@@ -61,7 +95,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //Memory Allocation Error
     if (buffer == NULL)
     {
-        printf("There is not enough memory available.");
+        printf("There is not enough memory available.\n");
         return NULL;
     }
 
@@ -70,7 +104,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //Fat Table Read Error
     if (read_rc < size)
     {
-        printf("Incorrect fat_sectors or sector_size paramaters.");
+        printf("Incorrect fat_sectors or sector_size paramaters.\n");
         free(buffer);
         return NULL;
     }
@@ -78,35 +112,37 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //printf("%x",(FAT_TABLE*)buffer);
     return (FAT_TABLE*)buffer;
 }
-/*
-int main(int argc, char* argv[])
-{
-    char* filename = "dfr-16-fat.dd";
- 
-    struct stat fs = {0};
-    if (stat(filename, &fs) != 0)
-    {
-        printf("Error: Could not read file statistics for '%s'\n", filename);
-        return 0;
-    } 
- 
-    FILE* fin = fopen(filename, "rb");
-    if (fin == NULL)
-    {
-        printf("Error: Could not open binary file '%s'\n", filename);
-        return 0;
-    }
-    int offsetToFatTable = 0x810800; // taken from hex dump (unique to this image)
-    int count = 2;                   // taken from boot sector as seen in hex dump (pretty standard)
-    int fat_sectors = 254;           // taken from boot sector as seen in hex dump (unique to this image)
-    int sector_size = 512;           // taken from boot sector as seen in hex dump (pretty standard)
- 
-    FAT_TABLE* fat = ReadFatTable(fin, offsetToFatTable, count, fat_sectors, sector_size);
-    printf("data: %08x\n", *(unsigned int*)fat);
-    return 1;
-}
-*/
 
+ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
+{
+    int size = count * sizeof(ROOT_ENTRY);
+
+    char* buffer = (char*)malloc(size);
+    //                 |
+    //Error Check here v
+    
+    
+    int seek_rc = fseek(fp, offset, SEEK_SET);
+    if (seek_rc != 0)
+    {
+        printf("seek failed");
+        free(buffer);
+        return NULL;
+    }
+
+
+    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+    if (read_rc != count)
+    {
+        printf("read failed");
+        printf("size: %d", size);
+        printf("///%d", read_rc);
+        free(buffer);
+        return NULL;
+    }
+
+<<<<<<< HEAD
+=======
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
     int size = count * sizeof(ROOT_ENTRY);
@@ -135,8 +171,43 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
         return NULL;
     }
 
+>>>>>>> 653949fd0f1b76401cbad25556a561328bdd8db1
     //printf("-------------------------------------\n");
     //printf("%x", (ROOT_ENTRY*)buffer);
     //printf("-------------------------------------");
     return (ROOT_DIR*)buffer;
 }
+
+//ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
+//{
+//    int size = count * sizeof(ROOT_ENTRY);
+
+//    char* buffer = (char*)malloc(size);
+    //                 |
+    //Error Check here v
+    
+    
+//    int seek_rc = fseek(fp, offset, SEEK_SET);
+//    if (seek_rc != 0)
+//    {
+//        printf("seek failed");
+//        free(buffer);
+//        return NULL;
+//    }
+
+
+//    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+//    if (read_rc != count)
+//    {
+//        printf("read failed");
+//        printf("size: %d", size);
+//        printf("///%d", read_rc);
+//        free(buffer);
+//        return NULL;
+//    }
+
+    //printf("-------------------------------------\n");
+    //printf("%x", (ROOT_ENTRY*)buffer);
+    //printf("-------------------------------------");
+//    return (ROOT_DIR*)buffer;
+//}
