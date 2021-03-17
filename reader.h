@@ -2,6 +2,7 @@
 #define READER_HEADER
 #include <stdint.h>
 
+
 // Partition Type
 typedef struct _PARTITION
 {
@@ -35,16 +36,32 @@ typedef struct FAT_TABLE
 	FAT_TABLE_ENTRY Table[0];
 }__attribute__((packed)) FAT_TABLE;
 
-// Root Directory
-typedef struct ROOT_DIR
+// Root Entry
+typedef struct ROOT_ENTRY
 {
-	
-}__attribute__((packed)) ROOT_DIR;
+	uint8_t filename[8];
+	uint8_t file_exetension[3];
+	uint8_t file_attribute;
+	uint8_t reserved[10];
+	uint16_t timeOfLastChange;
+	uint16_t dateOfLastChange;
+	uint8_t first_cluster[2];
+	uint32_t file_size;
+
+}__attribute__((packed)) ROOT_ENTRY;
+
+//
+//typedef struct ROOT_DIR
+//{
+//	DIR_ENTRY data[0];
+//
+//} __attribute__((packed)) ROOT_DIR;
+
 
 int ReadDiskImage(char* filename);
 MBR* ReadMasterBootRecord(FILE* fp, long int offset);
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
-ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
+ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
 #endif

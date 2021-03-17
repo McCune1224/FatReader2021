@@ -109,5 +109,34 @@ int main(int argc, char* argv[])
 
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
-    return NULL;
+    int size = count * sizeof(ROOT_ENTRY);
+
+    char* buffer = (char*)malloc(size);
+    //                 |
+    //Error Check here v
+    
+    
+    int seek_rc = fseek(fp, offset, SEEK_SET);
+    if (seek_rc != 0)
+    {
+        printf("seek failed");
+        free(buffer);
+        return NULL;
+    }
+
+
+    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+    if (read_rc != count)
+    {
+        printf("read failed");
+        printf("size: %d", size);
+        printf("///%d", read_rc);
+        free(buffer);
+        return NULL;
+    }
+
+    //printf("-------------------------------------\n");
+    //printf("%x", (ROOT_ENTRY*)buffer);
+    //printf("-------------------------------------");
+    return (ROOT_DIR*)buffer;
 }
