@@ -6,7 +6,7 @@
 int ReadDiskImage(char* filename)
 {
     // File Open
-    FILE* fp = fopen(filename, "r");
+    FILE* fp = fopen(filename, "rb");
     if (fp == NULL)
     {
         printf("Error: Could not open binary file '%s'\n", filename);
@@ -20,6 +20,7 @@ int ReadDiskImage(char* filename)
         printf("ERROR: ReadMasterBootRecord Failed\n");
         //return 1;
     }
+    HexDump(mbr, 512);
 
     // Fat Table
     int offsetToFatTable = 0x810800; // taken from hex dump (unique to this image)
@@ -33,14 +34,16 @@ int ReadDiskImage(char* filename)
         printf("ERROR: ReadFatTable Failed\n");
         //return 1;
     }
+    printf("data: %08x\n", *(unsigned int*)fat);
 
     // Root Directory
-    ROOT_DIR* root = ReadFatRootDirectory(fp, 10000, count);
+    ROOT_DIR* root = ReadFatRootDirectory(fp, 0x850000, 100);
     if(root == NULL)
     {
         printf("ERROR: ReadFatRootDirectory Failed\n");
         //return 1;
     }
+    HexDump(root, 100);
 
     fclose(fp);
     return 0;
@@ -63,11 +66,11 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
     }
     
     int total_count = fread(buffer, 1, sizeof(MBR), fp); 
-    HexDump(buffer, total_count);
-    printf("----------------------------\n");
-    int total_count2 = fread(buffer, 1, sizeof(MBR), fp); 
-    HexDump(buffer, total_count2);
-    printf("%d\n", total_count2);
+    //HexDump(buffer, total_count);
+    //printf("----------------------------\n");
+    //int total_count2 = fread(buffer, 1, sizeof(MBR), fp); 
+    //HexDump(buffer, total_count2);
+    //printf("%d\n", total_count2);
 
     if (total_count < sizeof(MBR)) //if the total count is less than the size of MBR, it wont be able to read the contents of the file
     {
