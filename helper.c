@@ -220,27 +220,80 @@ char* filename1 = "filenametxtAAAAAA"; // "filename.txt"
 char* filename2 = "file    docBBBBBB"; // "file.doc"
 char* filename3 = "my_dir     CCCCCC"; // "my_dir"
 
+//helper function to remove trailing spaces
+static void RemoveTrailingSpaces(char *fat_filename_buffer)
+{
+    int end = strlen(fat_filename_buffer);
+
+    // Substitute NULLs for any trailing spaces
+    int i = end - 1;
+    while (i >= 0 && fat_filename_buffer[i] == ' ')
+    {
+        fat_filename_buffer[i] = '\0';
+        i--;
+    }
+}
+
 // Alex
 // Fixes up the name of data in our Fat Table. Note that this is only designed for short file. 
 // Short files can only contain a file name with a max size of 8, and a extension name with a max size of 3.
-void FixShortFile(void *rawFilename)
+char* FixShortFile(void *rawFilename)
 {
+    //make a char pointer based off void pointer we are given
     char *pRawFileName = rawFilename;
-    char fullFileName[12] = {'\0'};
+    //make an array to update the string in
+    static char fullFileName[12] = {'\0'};
+    //copy the first 8 characters of the char pointer (first 8 bytes are always name)
+    strncpy(fullFileName, rawFilename, 8);
+    //helper function to remove trailing spaces
+    RemoveTrailingSpaces(fullFileName);
 
-    memcpy(fullFileName, pRawFileName, 12);
-    printf("Modifying: |%s|\n", fullFileName);
 
-
-    fullFileName[11] = '\0';
-    printf("Result: |%s|\n",fullFileName);
-    if (fullFileName[8] == ' ')
+    //printf("|%s|\n", fullFileName);
+    //modify string based off if its a directory or file
+    //9th character should have text if a file, if empty then a dir.
+    if (pRawFileName[8] == ' ') //this is a directory
     {
-        printf("Is a Directory.");
+        //debug print
+        //printf("|%s| is a directory\n", fullFileName);
     }
-    else
+    else //this is a file
     {
-        printf("Is a .%c%c%c File", fullFileName[8],fullFileName[9],fullFileName[10]);
+        int end = 0;
+        while (fullFileName[end]!= '\0')
+        {
+            //printf(". %c\n",fullFileName[end]);
+            end++;
+        }
+        //update the following 4 characters to have .[extention] + null padding at end
+        fullFileName[end+1] = '.';
+        fullFileName[end+2] = pRawFileName[8];
+        fullFileName[end+3] = pRawFileName[9];
+        fullFileName[end+4] = pRawFileName[10];
+        fullFileName[end+5] = '\0';
+        //debug print
+        //printf("|%s| is a file of type |.%c%c%c|\n", fullFileName,fullFileName[end+2],fullFileName[end+3],fullFileName[end+4]);
     }
-    int count = 0;
+
+    return fullFileName;
+
+    // char src[] = "MaxJumboRocknroll";
+    //     char dest[5] = { 0 }; // 4 chars + terminator */
+    //     int len = strlen(src);
+    //     int i = 0;
+
+    //     while (i*4 < len) {
+    //         strncpy(dest, src+(i*4), 4);
+    //         i++;
+
+    //         printf("loop %d : %s\n", i, dest);
+
+    // if (fullFileName[8] == ' ')
+    // {
+    //     printf("Is a Directory.\n");
+    // }
+    // else
+    // {
+    //     printf("Is a .%c%c%c File\n", fullFileName[8],fullFileName[9],fullFileName[10]);
+    // }
 }

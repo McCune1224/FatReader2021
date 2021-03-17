@@ -7,6 +7,6 @@ char* FileAttributes(uint8_t byte);
 char* MediaType(uint8_t);
 char* PartitionTypeName(uint8_t);
 void HexDump(void*, int size);
-void FixShortFile(void*);
+char* FixShortFile(void*);
 
 #endif
