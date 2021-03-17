@@ -166,14 +166,12 @@ char* PartitionTypeName(uint8_t PartitionType)
 
 // Ali
 // Reads data at memory address (void*) till the end of given size, then dumps the hex values. Here is an example output:
-void hexDump(void *addr, int size)
+void HexDump(void *addr, int size)
 {
     int i;
     char temp[17];
     unsigned char *x = (unsigned char*)addr;
-
     
-
     // Process every byte in the data.
     for (i = 0; i < size; i++) 
     {
@@ -196,14 +194,14 @@ void hexDump(void *addr, int size)
         //  from  (space) --------->  (~) in ASCII 
         if ((x[i] < 0x20) || (x[i] > 0x7e)) 
         {
-            temp[i % 8] = '.';
+            temp[i % 16] = '.';
         } 
         else 
         {
-            temp[i % 8] = x[i];
+            temp[i % 16] = x[i];
         }
         // Add a Null terminator to the end of the line so it can be printed
-        temp[(i % 8) + 1] = '\0';
+        temp[(i % 16) + 1] = '\0';
     }
 
     // Pad out last line if not exactly 16 characters.

@@ -50,18 +50,16 @@ typedef struct ROOT_ENTRY
 
 }__attribute__((packed)) ROOT_ENTRY;
 
-//
-//typedef struct ROOT_DIR
-//{
-//	DIR_ENTRY data[0];
-//
-//} __attribute__((packed)) ROOT_DIR;
+typedef struct ROOT_DIR
+{
+	ROOT_ENTRY data[0];
+} __attribute__((packed)) ROOT_DIR;
 
 
 int ReadDiskImage(char* filename);
 MBR* ReadMasterBootRecord(FILE* fp, long int offset);
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
-ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count);
+ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
 #endif

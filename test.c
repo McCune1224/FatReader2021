@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     //    return 0;
     //} 
  
-    //FILE* fin = fopen(filename, "r");
+    //FILE* fin = fopen(filename, "rb");
     //if (fin == NULL)
     //{
     //   printf("Error: Could not open binary file '%s'\n", filename);
