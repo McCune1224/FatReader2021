@@ -83,7 +83,27 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
+    int seek_rc = fseek(fp, offset, SEEK_SET);
+    if (seek_rc !=0)
+    {
+        printf("Fat Boot Sector Failed to read");
+        return NULL;
+    }
     return NULL;
+    char* buffer = (char*)malloc(sizeof(FAT_BOOT));
+    if (buffer == NULL)
+    {
+        printf("Unable to allocate memory for struct FAT_BOOT");
+        return NULL;
+    }
+    int read_rc = fread(buffer, 1, sizeof(FAT_BOOT), fp);
+    if (read_rc == NULL)
+    {
+        printf("Unable to fread buffer");
+        return NULL;
+    }
+    return (FAT_BOOT*)buffer;
+    
 }
 
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
@@ -123,39 +143,6 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     return (FAT_TABLE*)buffer;
 }
 
-//ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
-//{
-//    int size = count * sizeof(ROOT_ENTRY);
-
-//    char* buffer = (char*)malloc(size);
-    //                 |
-    //Error Check here v
-    
-//    int seek_rc = fseek(fp, offset, SEEK_SET);
-//    if (seek_rc != 0)
-//    {
-//        printf("seek failed");
-//        free(buffer);
-//        return NULL;
-//    }
-
-
-//    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
-//    if (read_rc != count)
-//    {
-//       printf("read failed");
-//        printf("size: %d", size);
-//        printf("///%d", read_rc);
-//        free(buffer);
-//        return NULL;
-//    }
-
-    //printf("-------------------------------------\n");
-    //printf("%x", (ROOT_ENTRY*)buffer);
-    //printf("-------------------------------------");
-//    return (ROOT_ENTRY*)buffer;
-//}
-
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
    int size = count * sizeof(ROOT_ENTRY);
@@ -190,6 +177,6 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
        free(buffer);
        return NULL;
    }
-
+  
    return (ROOT_DIR*)buffer;
 }
