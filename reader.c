@@ -83,7 +83,27 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
+    int seek_rc = fseek(fp, offset, SEEK_SET);
+    if (seek_rc !=0)
+    {
+        printf("Fat Boot Sector Failed to read");
+        return NULL;
+    }
     return NULL;
+    char* buffer = (char*)malloc(sizeof(FAT_BOOT));
+    if (buffer == NULL)
+    {
+        printf("Unable to allocate memory for struct FAT_BOOT");
+        return NULL;
+    }
+    int read_rc = fread(buffer, 1, sizeof(FAT_BOOT), fp);
+    if (read_rc == NULL)
+    {
+        printf("Unable to fread buffer");
+        return NULL;
+    }
+    return (FAT_BOOT*)buffer;
+    
 }
 
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
