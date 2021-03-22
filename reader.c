@@ -143,49 +143,21 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     return (FAT_TABLE*)buffer;
 }
 
-//ROOT_ENTRY* ReadFatRootDirectory(FILE* fp, long int offset, int count)
-//{
-//    int size = count * sizeof(ROOT_ENTRY);
-
-//    char* buffer = (char*)malloc(size);
-    //                 |
-    //Error Check here v
-    
-//    int seek_rc = fseek(fp, offset, SEEK_SET);
-//    if (seek_rc != 0)
-//    {
-//        printf("seek failed");
-//        free(buffer);
-//        return NULL;
-//    }
-
-
-//    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
-//    if (read_rc != count)
-//    {
-//       printf("read failed");
-//        printf("size: %d", size);
-//        printf("///%d", read_rc);
-//        free(buffer);
-//        return NULL;
-//    }
-
-    //printf("-------------------------------------\n");
-    //printf("%x", (ROOT_ENTRY*)buffer);
-    //printf("-------------------------------------");
-//    return (ROOT_ENTRY*)buffer;
-//}
-
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
    int size = count * sizeof(ROOT_ENTRY);
 
    char* buffer = (char*)malloc(size);
-   //                 |
-   //Error Check here v
-    
+   //malloc error check
+   if (buffer == NULL)
+   {
+       printf("Read Root Directory ERROR! Not enough memory!");
+       return NULL;
+   }
     
    int seek_rc = fseek(fp, offset, SEEK_SET);
+
+   //fseek error check
    if (seek_rc != 0)
    {
        printf("seek failed");
@@ -193,7 +165,10 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
        return NULL;
    }
 
+   //read the data from file into the buffer
    int read_rc = fread(buffer, sizeof(ROOT_ENTRY), count, fp);
+
+   //fread error check
    if (read_rc != count)
    {
        printf("read failed");
@@ -202,9 +177,6 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
        free(buffer);
        return NULL;
    }
-
-    //printf("-------------------------------------\n");
-    //printf("%x", (ROOT_ENTRY*)buffer);
-    //printf("-------------------------------------");
+  
    return (ROOT_DIR*)buffer;
 }
