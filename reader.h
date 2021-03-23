@@ -2,7 +2,6 @@
 #define READER_HEADER
 #include <stdint.h>
 
-
 // Partition Type
 typedef struct _PARTITION
 {
@@ -20,7 +19,6 @@ typedef struct _MBR
 	uint8_t bootloader[446]; //bootloader of MBR starts with 446 bytes
 	PARTITION list[4]; //There are 4 partitions(each one is 16 bytes each)
 	uint16_t bootsignature; //using uint16_t as the boot signature is 2 bytes
-
 }__attribute__((packed)) MBR;
 
 // Fat Boot Sector
