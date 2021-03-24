@@ -44,22 +44,10 @@ int ReadDiskImage(char* filename)
     FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
     HexDump(boot, 512);
 
-    // Fat Table
-    //int offsetToFatTable = 0x810800; // taken from hex dump (unique to this image)
-    //int count = 2;                   // taken from boot sector as seen in hex dump (pretty standard)
-    //int fat_sectors = 254;           // taken from boot sector as seen in hex dump (unique to this image)
-    //int sector_size = 512;           // taken from boot sector as seen in hex dump (pretty standard)
-
     int count = boot->number_of_file_allocation_table;                  
     int fat_sectors = boot->logical_sectors_per_alloc_table;          
     int sector_size = boot->bytes_per_sector;   
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
-
-    printf("%d\n", offsetToBootSector); 
-    printf("%d\n", count); 
-    printf("%d\n", fat_sectors); 
-    printf("%d\n", sector_size); 
-    printf("%d\n", offsetToFatTable);    
 
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     if(fat == NULL) 
@@ -69,20 +57,14 @@ int ReadDiskImage(char* filename)
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
-
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
-
-
-    printf("Reserved Logical:%x\n",boot->reserved_logical_sectors);
-    printf("PLEASE WORK:%x\n",(boot->reserved_logical_sectors * sector_size));
-    printf("%x\n", offsetToRootDir);
 
     // Root Directory
     ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, count);
     if(root == NULL)
     {
         printf("ERROR: ReadFatRootDirectory Failed\n");
-        //return 1;
+        return 1;
     }
 
     HexDump(root, 100);

@@ -51,8 +51,6 @@ typedef struct FAT_BOOT
 	uint8_t partition_volume_label[11];
 	uint8_t file_system_type[8];
 
-
-
 	uint8_t bootstrap_code[448]; 
 	uint16_t boot_sector_signature; //Indicates compatible boot code and tested by boot loader.
 }__attribute__((packed)) FAT_BOOT;
