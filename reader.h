@@ -60,10 +60,10 @@ typedef struct FAT_BOOT
 }__attribute__((packed)) FAT_BOOT;
 
 // Fat Table
-typedef uint16_t FAT_TABLE_ENTRY;
+typedef uint16_t FAT_TABLE_ENTRY; // A single FAT Table entry 
 typedef struct FAT_TABLE
 {
-	FAT_TABLE_ENTRY Table[0];
+	FAT_TABLE_ENTRY Table[0]; //An unkown amount of FAT Table Entries
 }__attribute__((packed)) FAT_TABLE;
 
 // Root Entry
