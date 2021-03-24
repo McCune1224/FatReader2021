@@ -69,9 +69,21 @@ int ReadDiskImage(char* filename)
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
+
+//~~E V I L ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //int offsetToRootDir = 0x850000;
-    int offsetToRootDir = boot->number_of_file_allocation_table * boot->logical_sectors_per_alloc_table * boot->bytes_per_sector;
-    printf("%d\n", offsetToRootDir);
+    // int offsetToRootDir = boot->number_of_file_allocation_table * boot->logical_sectors_per_alloc_table * boot->bytes_per_sector;
+    // int offsetToRootDir = offsetToFatTable + (boot->number_of_file_allocation_table * fat_sectors * sector_size);
+    //int offsetToRootDir = offsetToFatTable + (boot->number_of_file_allocation_table * fat_sectors * sector_size);
+    //int offsetToRootDir = offsetToBootSector + (count * fat_sectors * sector_size);
+    //int offsetToRootDir = offsetToBootSector + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size);
+    //int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size);
+    int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size)/2;
+
+
+    printf("Reserved Logical:%x\n",boot->reserved_logical_sectors);
+    printf("PLEASE WORK:%x\n",(boot->reserved_logical_sectors * sector_size));
+    printf("%x\n", offsetToRootDir);
 
     // Root Directory
     ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, 100);
