@@ -51,7 +51,7 @@ int ReadDiskImage(char* filename)
     //int sector_size = 512;           // taken from boot sector as seen in hex dump (pretty standard)
 
     int count = boot->number_of_file_allocation_table;                  
-    int fat_sectors = boot->logical_sectors_per_alloc_table - 1; // -1 ?         
+    int fat_sectors = boot->logical_sectors_per_alloc_table;          
     int sector_size = boot->bytes_per_sector;   
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
@@ -70,15 +70,7 @@ int ReadDiskImage(char* filename)
     printf("data: %08x\n", *(unsigned int*)fat);
 
 
-//~~E V I L ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //int offsetToRootDir = 0x850000;
-    // int offsetToRootDir = boot->number_of_file_allocation_table * boot->logical_sectors_per_alloc_table * boot->bytes_per_sector;
-    // int offsetToRootDir = offsetToFatTable + (boot->number_of_file_allocation_table * fat_sectors * sector_size);
-    //int offsetToRootDir = offsetToFatTable + (boot->number_of_file_allocation_table * fat_sectors * sector_size);
-    //int offsetToRootDir = offsetToBootSector + (count * fat_sectors * sector_size);
-    //int offsetToRootDir = offsetToBootSector + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size);
-    //int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size);
-    int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size) + (boot->reserved_logical_sectors * sector_size)/2;
+    int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
 
 
     printf("Reserved Logical:%x\n",boot->reserved_logical_sectors);
@@ -86,7 +78,7 @@ int ReadDiskImage(char* filename)
     printf("%x\n", offsetToRootDir);
 
     // Root Directory
-    ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, 100);
+    ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, count);
     if(root == NULL)
     {
         printf("ERROR: ReadFatRootDirectory Failed\n");
