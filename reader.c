@@ -26,11 +26,9 @@ int ReadDiskImage(char* filename)
     // WILL ONLY WORK WITH FAT16 AND FAT16B
     int offsetToBootSector = 0;
     for(int i = 0; i < 4; i++)
-    {
-        printf("Offset: %x\n", mbr->list[i].lba_offset);       
+    {   
         if(mbr->list[i].type == 0x04 || mbr->list[i].type == 0x06)
         {
-            printf("YAY\n");
             offsetToBootSector = mbr->list[i].lba_offset * 512;
         }
     }
