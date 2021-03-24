@@ -54,7 +54,8 @@ int ReadDiskImage(char* filename)
     int fat_sectors = boot->logical_sectors_per_alloc_table - 1; // -1 ?         
     int sector_size = boot->bytes_per_sector;   
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
-  
+
+    printf("%d\n", offsetToBootSector); 
     printf("%d\n", count); 
     printf("%d\n", fat_sectors); 
     printf("%d\n", sector_size); 

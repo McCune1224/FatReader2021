@@ -65,5 +65,6 @@ int main(int argc, char* argv[])
 	printf("Dir Test:\n");
 	printf("%s\n", FixShortFile(filename3));
 
+
     return 0;
 }
