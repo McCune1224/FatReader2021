@@ -106,6 +106,11 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
     
 }
 
+//Ali - ReadFatTable
+//
+//Seeks to specified offset of given fat file. 
+//Then calculates the size of needed buffer to read from the file from the previously stated offset and returns a pointer to the read buffer.
+//Error checks a long the way.
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
@@ -116,22 +121,25 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         printf("Could not find the data at given offset, %i\n", offset);
         return NULL;
     }
-
+    
+    //Calculating size to read
     int size = count*(fat_sectors * sector_size);
     //        count * 1 Fat Table Entry
 
+    //Creating Buffer
     char* buffer = (char*)malloc(size);
         
-    //Memory Allocation Error
+    //Memory Allocation Error Check
     if (buffer == NULL)
     {
         printf("There is not enough memory available.\n");
         return NULL;
     }
 
+    //Read from buffer a calculated amount from offset
     int read_rc = fread(buffer, 1, size, fp);
 
-    //Fat Table Read Error
+    //Fat Table Read Error Check
     if (read_rc < size)
     {
         printf("Incorrect fat_sectors or sector_size paramaters.\n");
@@ -139,7 +147,6 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         return NULL;
     }
     
-    //printf("%x",(FAT_TABLE*)buffer);
     return (FAT_TABLE*)buffer;
 }
 
