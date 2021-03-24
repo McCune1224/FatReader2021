@@ -47,6 +47,11 @@ int ReadDiskImage(char* filename)
     int sector_size = boot->bytes_per_sector;   
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
+    printf("%d\n", count);
+    printf("%d\n", fat_sectors);
+    printf("%d\n", sector_size);
+    printf("%d\n", offsetToFatTable);
+
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     if(fat == NULL) 
     {
