@@ -49,6 +49,11 @@ int ReadDiskImage(char* filename)
     return 0;
 }
 
+// Kevin- MBR
+// seeks to offset of fp(our pointer)
+// offset of MBR is 0
+// Calculates size of buffer
+// If "fread" fails, MBR won't read contents of file or it would read some contents, but not all that are required
 MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
