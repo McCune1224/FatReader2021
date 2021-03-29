@@ -81,11 +81,26 @@ typedef struct ROOT_DIR
 	ROOT_ENTRY data[0];
 } __attribute__((packed)) ROOT_DIR;
 
-
+/*
+ * Reads the disk image containing a FAT16 partition
+ * Forms data into four structs: MBR, FAT_BOOT, FAT_TABLE, ROOT_DIR
+ *
+ * -=| Params |=-
+ *   filename: string filelocation of disk image
+ *
+ * -=| Returns |=-
+ *   type:    int
+ *   success: returns 0
+ *   failure: returns 1
+ */
 int ReadDiskImage(char* filename);
+
 MBR* ReadMasterBootRecord(FILE* fp, long int offset);
+
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
+
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
+
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
 #endif

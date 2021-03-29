@@ -3,50 +3,61 @@
 #include "reader.h"
 #include "helper.h"
 
+/******************************************************************************
+**                              ReadDiskImage                                **
+******************************************************************************/
+
 int ReadDiskImage(char* filename)
 {
-    // File Open
+    // Open disk image ------------------------------------------------------------------------
     FILE* fp = fopen(filename, "rb");
     if (fp == NULL)
     {
-        printf("Error: Could not open binary file '%s'\n", filename);
+        printf("Error: Could not open binary disk image: '%s'\n", filename);
         return 1;
     }
 
-    // Master Boot Record
+    // Master Boot Record ---------------------------------------------------------------------
     MBR* mbr = ReadMasterBootRecord(fp, 0);
     if(mbr == NULL)
     {
-        printf("ERROR: ReadMasterBootRecord Failed\n");
-        //return 1;
+        printf("Error: ReadMasterBootRecord Failed\n");
+        return 1;
     }
     HexDump(mbr, 512);
 
-    // Boot Sector
-    // WILL ONLY WORK WITH FAT16 AND FAT16B
+    // Boot Sector ----------------------------------------------------------------------------
     int offsetToBootSector = 0;
+
+    // Iterate through all 4 Partitions of the Master Boot Record
     for(int i = 0; i < 4; i++)
     {   
+        // Check if partition is FAT16 or FAT16B
         if(mbr->list[i].type == 0x04 || mbr->list[i].type == 0x06)
         {
             offsetToBootSector = mbr->list[i].lba_offset * 512;
         }
     }
 
+    // Check if a FAT16 or FAT16B bootsector was found, if not return failure
     if(offsetToBootSector == 0)
     {
-        printf("ERROR: Could not find BootSector in MBR\n");
-        //return 1;
+        printf("Error: Could not find BootSector in MBR\n");
+        return 1;
     }
 
     FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
     HexDump(boot, 512);
 
+    // Fat Table ------------------------------------------------------------------------------
+
+    // Get required parameters for ReadFatTable using the FAT_BOOT structure
     int count = boot->number_of_file_allocation_table;                  
     int fat_sectors = boot->logical_sectors_per_alloc_table;          
     int sector_size = boot->bytes_per_sector;   
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
+    // Print debug data (TEMP, TO BE REMOVED IN FUTURE)
     printf("%d\n", count);
     printf("%d\n", fat_sectors);
     printf("%d\n", sector_size);
@@ -55,18 +66,19 @@ int ReadDiskImage(char* filename)
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     if(fat == NULL) 
     {
-        printf("ERROR: ReadFatTable Failed\n");
-        //return 1;
+        printf("Error: ReadFatTable Failed\n");
+        return 1;
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
+
+    // Root Directory -------------------------------------------------------------------------
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
 
-    // Root Directory
     ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, count);
     if(root == NULL)
     {
-        printf("ERROR: ReadFatRootDirectory Failed\n");
+        printf("Error: ReadFatRootDirectory Failed\n");
         return 1;
     }
 
@@ -75,6 +87,10 @@ int ReadDiskImage(char* filename)
     fclose(fp);
     return 0;
 }
+
+/******************************************************************************
+**                           ReadMasterBootRecord                            **
+******************************************************************************/
 
 // Kevin- MBR
 // seeks to offset of fp(our pointer)
@@ -113,6 +129,10 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
     return (MBR*)buffer;
 }
 
+/******************************************************************************
+**                             ReadFatBootSector                             **
+******************************************************************************/
+
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
@@ -135,6 +155,10 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
     }
     return (FAT_BOOT*)buffer;
 }
+
+/******************************************************************************
+**                               ReadFatTable                                **
+******************************************************************************/
 
 //Ali - ReadFatTable
 //
@@ -179,6 +203,10 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     
     return (FAT_TABLE*)buffer;
 }
+
+/******************************************************************************
+**                           ReadFatRootDirectory                            **
+******************************************************************************/
 
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
