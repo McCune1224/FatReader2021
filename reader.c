@@ -22,11 +22,35 @@ int ReadDiskImage(char* filename)
     }
     HexDump(mbr, 512);
 
-    // Fat Table
-    int offsetToFatTable = 0x810800; // taken from hex dump (unique to this image)
-    int count = 2;                   // taken from boot sector as seen in hex dump (pretty standard)
-    int fat_sectors = 254;           // taken from boot sector as seen in hex dump (unique to this image)
-    int sector_size = 512;           // taken from boot sector as seen in hex dump (pretty standard)
+    // Boot Sector
+    // WILL ONLY WORK WITH FAT16 AND FAT16B
+    int offsetToBootSector = 0;
+    for(int i = 0; i < 4; i++)
+    {   
+        if(mbr->list[i].type == 0x04 || mbr->list[i].type == 0x06)
+        {
+            offsetToBootSector = mbr->list[i].lba_offset * 512;
+        }
+    }
+
+    if(offsetToBootSector == 0)
+    {
+        printf("ERROR: Could not find BootSector in MBR\n");
+        //return 1;
+    }
+
+    FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
+    HexDump(boot, 512);
+
+    int count = boot->number_of_file_allocation_table;                  
+    int fat_sectors = boot->logical_sectors_per_alloc_table;          
+    int sector_size = boot->bytes_per_sector;   
+    int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
+
+    printf("%d\n", count);
+    printf("%d\n", fat_sectors);
+    printf("%d\n", sector_size);
+    printf("%d\n", offsetToFatTable);
 
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     if(fat == NULL) 
@@ -36,13 +60,16 @@ int ReadDiskImage(char* filename)
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
+    int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
+
     // Root Directory
-    ROOT_DIR* root = ReadFatRootDirectory(fp, 0x850000, 100);
+    ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, count);
     if(root == NULL)
     {
         printf("ERROR: ReadFatRootDirectory Failed\n");
-        //return 1;
+        return 1;
     }
+
     HexDump(root, 100);
 
     fclose(fp);
@@ -89,12 +116,11 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
-    if (seek_rc !=0)
+    if (seek_rc != 0)
     {
         printf("Fat Boot Sector Failed to read");
         return NULL;
     }
-    return NULL;
     char* buffer = (char*)malloc(sizeof(FAT_BOOT));
     if (buffer == NULL)
     {
@@ -102,13 +128,12 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
         return NULL;
     }
     int read_rc = fread(buffer, 1, sizeof(FAT_BOOT), fp);
-    if (read_rc == NULL)
+    if (read_rc == 0)
     {
         printf("Unable to fread buffer");
         return NULL;
     }
     return (FAT_BOOT*)buffer;
-    
 }
 
 //Ali - ReadFatTable
