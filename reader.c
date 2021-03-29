@@ -132,15 +132,17 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 /******************************************************************************
 **                             ReadFatBootSector                             **
 ******************************************************************************/
-
+//Read in the file's pointer and offset value based off lba_offset
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
+    //try to read fp
     int seek_rc = fseek(fp, offset, SEEK_SET);
     if (seek_rc != 0)
     {
         printf("Fat Boot Sector Failed to read");
         return NULL;
     }
+    //allocate buffer for the size of FAT_BOOT struct as char*
     char* buffer = (char*)malloc(sizeof(FAT_BOOT));
     if (buffer == NULL)
     {
@@ -153,6 +155,7 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
         printf("Unable to fread buffer");
         return NULL;
     }
+    //return buffer wrapped ontop of FAT_BOOT struct
     return (FAT_BOOT*)buffer;
 }
 
