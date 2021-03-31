@@ -248,3 +248,52 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
   
    return (ROOT_DIR*)buffer;
 }
+
+/*Kevin*/
+int GetFileSize(char* filename)
+{
+    //1.get the correct root_entry.
+    //2.return file size from that entry.
+}
+
+/*Yunhu*/
+int GetDirectorySize(char* directory)
+{
+    //1.get the correct root_entry.
+    //2.read FAT_TABLE to follow up untill reaching EOF
+    //3.return directory size (number of clusters) * (size of 1 cluster which is 512) 
+}
+
+/*Luke & prof.Tallman*/
+ROOT_ENTRY* GetRootEntry(char* fullDirectory)
+{
+    //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
+    //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
+    //3.read ROOT_ENTRY to find first cluster of first directory entry
+    //4.follow up until reaching EOF
+    //5.read correspond cluster in data region
+    //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
+    //7.repeat step 3-5. Until we get to the last one
+    //8.return that ROOT_ENTRY
+}
+
+/*Alex*/
+char* GetFileData(char* targetFile)
+{
+    //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    //2.get file size or directory size using GetFileSize()/GetDirectorySize()
+    //3.malloc the buffer with file size/directory size
+    //4.read the data into the buffer using ReadFileContents()
+    //5.return the buffer
+}
+
+/*Ali*/
+char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
+{
+    //1.read ROOT_ENTRY to find first cluster
+    //2.follow up until reaching EOF
+    //3.read correspond cluster in data region
+    //4.load the data from clusters into the buffer
+    //5.return the buffer
+}
+
