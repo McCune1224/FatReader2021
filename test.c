@@ -18,5 +18,8 @@ int main(int argc, char* argv[])
 	int result = ReadDiskImage(filename);
 	printf("%d\n", result);
 
+    char* fullDirectory = "This/Is/A/Test/amsklda.123/asl";
+    GetRootEntry(fullDirectory);
+
     return 0;
 }

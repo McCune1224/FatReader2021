@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "reader.h"
 #include "helper.h"
 
 /******************************************************************************
 **                              ReadDiskImage                                **
 ******************************************************************************/
+
+MBR* mbr;
+FAT_BOOT* boot;
+FAT_TABLE* fat;
+ROOT_DIR* root;
 
 int ReadDiskImage(char* filename)
 {
@@ -18,7 +24,7 @@ int ReadDiskImage(char* filename)
     }
 
     // Master Boot Record ---------------------------------------------------------------------
-    MBR* mbr = ReadMasterBootRecord(fp, 0);
+    mbr = ReadMasterBootRecord(fp, 0);
     if(mbr == NULL)
     {
         printf("Error: ReadMasterBootRecord Failed\n");
@@ -46,7 +52,7 @@ int ReadDiskImage(char* filename)
         return 1;
     }
 
-    FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
+    boot = ReadFatBootSector(fp, offsetToBootSector);
     HexDump(boot, 512);
 
     // Fat Table ------------------------------------------------------------------------------
@@ -63,7 +69,7 @@ int ReadDiskImage(char* filename)
     printf("%d\n", sector_size);
     printf("%d\n", offsetToFatTable);
 
-    FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
+    fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     if(fat == NULL) 
     {
         printf("Error: ReadFatTable Failed\n");
@@ -75,7 +81,7 @@ int ReadDiskImage(char* filename)
     // Root Directory -------------------------------------------------------------------------
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
 
-    ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, count);
+    root = ReadFatRootDirectory(fp, offsetToRootDir, count);
     if(root == NULL)
     {
         printf("Error: ReadFatRootDirectory Failed\n");
@@ -267,7 +273,7 @@ int GetDirectorySize(char* directory)
 /*Luke & prof.Tallman*/
 ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 {
-    //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
+    // DONE 1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
     //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
     //3.read ROOT_ENTRY to find first cluster of first directory entry
     //4.follow up until reaching EOF
@@ -275,6 +281,31 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
     //7.repeat step 3-5. Until we get to the last one
     //8.return that ROOT_ENTRY
+
+    char str[strlen(fullDirectory)];
+    strcpy(str, fullDirectory);
+    char delimiter[] = "/";
+    char* ptr = strtok(str, delimiter);
+
+    while(ptr != NULL)
+	{
+		printf("'%s'\n", ptr);
+		ptr = strtok(NULL, delimiter);
+	}
+
+	printf("\n");
+
+    printf("%d\n", sizeof(root));
+    for(int i = 0; i < sizeof(root); i++)
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            printf("%c", (char)root->data[i].filename[j]);
+        }
+        printf("\n");
+    }
+
+    return NULL;
 }
 
 /*Alex*/
