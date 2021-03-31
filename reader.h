@@ -71,7 +71,7 @@ typedef struct ROOT_ENTRY
 	uint8_t reserved[10];
 	uint16_t timeOfLastChange;
 	uint16_t dateOfLastChange;
-	uint8_t first_cluster[2];
+	uint16_t first_cluster;
 	uint32_t file_size;
 
 }__attribute__((packed)) ROOT_ENTRY;
@@ -102,5 +102,17 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
 
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
+
+//stage 2
+
+int GetFileSize(char* filename);
+
+int GetDirectorySize(char* directory);
+
+ROOT_ENTRY* GetRootEntry(char* fullDirectory);
+
+char* GetFileData(char* targetFile);
+
+char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size);
 
 #endif
