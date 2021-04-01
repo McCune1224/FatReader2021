@@ -291,15 +291,18 @@ char* GetFileData(char* targetFile)
 /*Ali*/
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
 {
+    //"C:\Program Files\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin\gcc" helper.c reader.c linked_list.c -o test.exe
+
     //1.read ROOT_ENTRY to find first cluster
-    list* clusterPointers = CreateList();
-    AppendValue(clusterPointers, entry->first_cluster, sizeof(entry->first_cluster));
+    int clusterPointers[0];
+    clusterPointers[0] = entry->first_cluster;
+    printf("%i", clusterPointers[0]);
     //2.follow up until reaching EOF
-    buffer += FAT_TABLE[clusterPointers->head]
+    //buffer += FAT_TABLE[clusterPointers->head]
     //3.read correspond cluster in data region
-    data;???
+    //data;???
     //4.load the data from clusters into the buffer
-    node* curr = clusterPointers->head;
+    //node* curr = clusterPointers->head;
     
     //5.return the buffer
 }
