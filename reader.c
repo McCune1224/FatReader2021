@@ -298,12 +298,18 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
     clusterPointers[0] = entry->first_cluster;
     printf("%i", clusterPointers[0]);
     //2.follow up until reaching EOF
-    //buffer += FAT_TABLE[clusterPointers->head]
+    for (int i = 1; FAT_TABLE[clusterPointers[i]] == 00; i++){
+        clusterPointers[i] = FAT_TABLE[clusterPointers[i-1]];
+    }
     //3.read correspond cluster in data region
-    //data;???
+    char* clusters = (char*)malloc(size);
+
+    for(int i = 0; i < sizeof(clusterPointers); i++;){
+        clusters += data[clusterPointers[i]];
+    }
     //4.load the data from clusters into the buffer
-    //node* curr = clusterPointers->head;
-    
+    buffer += clusters;
     //5.return the buffer
+    return buffer;
 }
 
