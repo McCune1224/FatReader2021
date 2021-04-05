@@ -250,11 +250,50 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 }
 
 /*Kevin*/
-int GetFileSize(char* filename)
-{
-    //1.get the correct root_entry.
-    //2.return file size from that entry.
+//1.get the correct root_entry.
+//2.return file size from that entry.
+
+//need to define a DIRECTORY_MASK
+#define DIRECTORY_MASK 0X10
+
+//uses 32 bits (4 bytes)
+uint32_t GetFileSize(char* filename)
+{   
+    //call ROOT_ENTRY* entry GetRootEntry function
+    ROOT_ENTRY* entry = GetRootEntry(filename);
+
+    //error checking for file
+    //if file does not exist, there will be no entry available
+    if (entry == NULL)
+    {
+        printf("File does not exist, root_entry not available\n");
+        
+        // temporary error code for entry
+        return 0;
+    }
+
+    //DIRECTORY MASK 0X10
+    //Determines whether its a file or a directory
+    if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
+    {
+        return GetDirectorySize(filename);
+    }
+    else
+    {
+        //returns entry file size
+        return entry->file_size;
+
+    }
+    
+
+    
+
+    
 }
+    
+    
+    
+
 
 /*Yunhu*/
 int GetDirectorySize(char* directory)
