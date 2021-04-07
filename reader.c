@@ -328,12 +328,12 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
 
     //1.read ROOT_ENTRY to find first cluster
     int clusterPointer = entry->first_cluster;
-    long int cluster_offset = gData + (512 * (clusterPointer - 2));
+    long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
     //2.follow up until reaching EOF
     while (clusterPointer < 0xFFF0 && remaining > 0){
         
         //3. Seek and read correspond cluster in data region
-        int seek_rc = fseek(gFP, cluster_offset, SEEK_SET);
+        int seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
 
         //if fseek equals 0, it is then successful. If it returns a nonzero, it has failed
         if (seek_rc != 0){
@@ -341,7 +341,7 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
             return NULL;
         }    
 
-        buffer = fread(buffer_pointer, 1, 512, gFP);
+        buffer = fread(buffer_pointer, 1, 512, g_filePointer);
         if(buffer == 0){
             printf("Unable to fread into buffer");
             return NULL;
@@ -351,7 +351,7 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
         remaining-=512;
 
         //4. Get next cluster from FAT
-        clusterPointer = gFatTable[cluster_offset+512];
+        clusterPointer = g_fatTable[cluster_offset+512];
         //???
     }
     //5. Return the buffer
