@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include "reader.h"
 #include "helper.h"
+#include "linked_list.h"
 
 
 
@@ -292,6 +293,8 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
    return (ROOT_DIR*)buffer;
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 /*Kevin*/
 //1.get the correct root_entry.
 //2.return file size from that entry.
@@ -325,18 +328,8 @@ uint32_t GetFileSize(char* filename)
     {
         //returns entry file size
         return entry->file_size;
-
     }
-
-
-
-
-
 }
-
-
-
-
 
 /*Yunhu*/
 int GetDirectorySize(char* directory)
@@ -372,13 +365,41 @@ char* GetFileData(char* targetFile)
 /*Ali*/
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
 {
-    //1.read ROOT_ENTRY to find first cluster
-    //2.follow up until reaching EOF
-    //3.read correspond cluster in data region
-    //4.load the data from clusters into the buffer
-    //5.return the buffer
-}
+    //"C:\Program Files\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin\gcc" helper.c reader.c linked_list.c -o test.exe
+    int remaining = size;
+    void* buffer_pointer = buffer;
 
+    //1.read ROOT_ENTRY to find first cluster
+    int clusterPointer = entry->first_cluster;
+    long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
+    //2.follow up until reaching EOF
+    while (clusterPointer < 0xFFF0 && remaining > 0){
+        
+        //3. Seek and read correspond cluster in data region
+        int seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
+
+        //if fseek equals 0, it is then successful. If it returns a nonzero, it has failed
+        if (seek_rc != 0){
+            printf("fseek failed, did not reach correct location.\n");
+            return NULL;
+        }    
+
+        buffer = fread(buffer_pointer, 1, 512, g_filePointer);
+        if(buffer == 0){
+            printf("Unable to fread into buffer");
+            return NULL;
+        }
+
+        buffer_pointer+=512;
+        remaining-=512;
+
+        //4. Get next cluster from FAT
+        clusterPointer = g_fatTable[cluster_offset+512];
+        //???
+    }
+    //5. Return the buffer
+    return buffer;    
+}
 
 ROOT_ENTRY* GetDirEntry(char* filename)
 {
