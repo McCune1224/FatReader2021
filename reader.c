@@ -362,44 +362,70 @@ char* GetFileData(char* targetFile)
     //5.return the buffer
 }
 
-/*Ali*/
+//Ali - ReadFileContents
+//
+//Searches through FAT to find pointers to the file's data and seeks to it to then reads all of the data into a buffer which gets returned.
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
 {
-    //"C:\Program Files\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin\gcc" helper.c reader.c linked_list.c -o test.exe
+    // How many bytes are left
     int remaining = size;
+    // Buffer Curr
     void* buffer_pointer = buffer;
+    // Amount of bytes read from buffer
+    int read_c;
+    // Amount of bytes seeked into buffer
+    int seek_rc;
 
-    //1.read ROOT_ENTRY to find first cluster
-    int clusterPointer = entry->first_cluster;
+    //1. Read ROOT_ENTRY to find first cluster.
+
+    // Cluster Curr
+    FAT_TABLE_ENTRY clusterPointer = entry->first_cluster;
+    // Offset from data to cluster
     long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
-    //2.follow up until reaching EOF
+
+    //2. Follow up until reaching EOF
     while (clusterPointer < 0xFFF0 && remaining > 0){
         
         //3. Seek and read correspond cluster in data region
-        int seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
 
-        //if fseek equals 0, it is then successful. If it returns a nonzero, it has failed
+        seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
+
+        // Error Checking
+
+        // If fseek returns 0, it is then successful. If it returns a nonzero, it has failed.
         if (seek_rc != 0){
             printf("fseek failed, did not reach correct location.\n");
             return NULL;
-        }    
+        }
 
-        buffer = fread(buffer_pointer, 1, 512, g_filePointer);
-        if(buffer == 0){
+        if (remaining>512){
+            // Reading 512 bytes into Buffer
+            read_c = fread(buffer_pointer, 1, 512, g_filePointer);
+        }
+        else
+        {
+            // Reading Last bit of Buffer
+            read_c = fread(buffer_pointer, 1, remaining, g_filePointer);
+        }
+        // If fread returns 0 then nothing has been read.
+        if (read_c == 0)
+        {
             printf("Unable to fread into buffer");
             return NULL;
         }
 
+        //Updating pointers/counters
         buffer_pointer+=512;
         remaining-=512;
 
         //4. Get next cluster from FAT
-        clusterPointer = g_fatTable[cluster_offset+512];
-        //???
+        clusterPointer = g_fatTable->Table[clusterPointer];
     }
     //5. Return the buffer
     return buffer;    
 }
+
+
 
 ROOT_ENTRY* GetDirEntry(char* filename)
 {
