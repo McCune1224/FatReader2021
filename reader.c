@@ -320,10 +320,15 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 char* GetFileData(char* targetFile)
 {
     //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    ROOT_ENTRY* entry = GetRootEntry(targetFile);
     //2.get file size or directory size using GetFileSize()/GetDirectorySize()
+    int fileSize = GetFileSize(targetFile);
     //3.malloc the buffer with file size/directory size
+    char* buffer = (char*)malloc(fileSize); 
     //4.read the data into the buffer using ReadFileContents()
+    buffer = ReadFileContents(entry, buffer, fileSize); 
     //5.return the buffer
+    return buffer;
 }
 
 /*Ali*/
