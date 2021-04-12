@@ -18,5 +18,12 @@ int main(int argc, char* argv[])
 	int result = ReadDiskImage(filename);
 	printf("%d\n", result);
 
-    return 0;
+//.dd file to read in and deciding whether its a file or directory
+//Test case for GetFileSize
+char buffer[256] = {0};
+strcpy(buffer, "/2-DIR-01/2-01-0~1.txt");
+int file_size = GetFileSize(buffer);
+printf("%d\n", file_size);
+   
+     return 0;
 }
