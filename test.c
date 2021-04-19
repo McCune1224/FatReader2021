@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     char* filename = "dfr-16-fat.dd";
 
 	//printf("\n");
-	int result = ReadDiskImage(filename);
+	ReadDiskImage(filename);
 	//printf("%d\n", result);
 
     // ROOT_ENTRY* test = GetRootEntry("/0-DIR-01");
