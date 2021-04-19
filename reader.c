@@ -219,7 +219,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //Fat Table Seek Error
     if(seek_rc != 0)
     {
-        printf("Could not find the data at given offset, %i\n", offset);
+        printf("Could not find the data at given offset, %li\n", offset);
         return NULL;
     }
 
@@ -320,7 +320,7 @@ uint32_t GetFileSize(char* filename)
 
     //DIRECTORY MASK 0X10
     //Determines whether its a file or a directory
-    if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
+    if((entry-> file_attribute) & (DIRECTORY_MASK == DIRECTORY_MASK))
     {
         return GetDirectorySize(filename);
     }
