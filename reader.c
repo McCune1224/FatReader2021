@@ -334,9 +334,22 @@ uint32_t GetFileSize(char* filename)
 /*Yunhu*/
 int GetDirectorySize(char* directory)
 {
-    //1.get the correct root_entry.
-    //2.read FAT_TABLE to follow up untill reaching EOF
-    //3.return directory size (number of clusters) * (size of 1 cluster which is 512)
+    ROOT_ENTRY* entry = GetDirEntry(directory);
+
+    int count = 0;
+    int cluster = entry->first_cluster;
+
+    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
+    FAT_TABLE_ENTRY* next = &base[cluster];
+
+    while (cluster < 0xFFF8)
+    {
+        count++;
+        cluster = *next;
+        next = &base[cluster];
+    }
+
+    return count * 512;
 }
 
 /*Luke & prof.Tallman*/
