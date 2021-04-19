@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "reader.h"
 #include "helper.h"
 
@@ -8,15 +9,17 @@
 **                              ReadDiskImage                                **
 ******************************************************************************/
 
-MBR* mbr;
-FAT_BOOT* boot;
-FAT_TABLE* fat;
-ROOT_DIR* root;
+static FILE* g_filePointer;
+static FAT_BOOT* g_fatBoot;
+static FAT_TABLE* g_fatTable;
+static ROOT_DIR* g_rootDir;
+static uint32_t g_offsetToDataClusters;
 
 int ReadDiskImage(char* filename)
 {
     // Open disk image ------------------------------------------------------------------------
     FILE* fp = fopen(filename, "rb");
+    g_filePointer = fp;
     if (fp == NULL)
     {
         printf("Error: Could not open binary disk image: '%s'\n", filename);
@@ -24,7 +27,7 @@ int ReadDiskImage(char* filename)
     }
 
     // Master Boot Record ---------------------------------------------------------------------
-    mbr = ReadMasterBootRecord(fp, 0);
+    MBR* mbr = ReadMasterBootRecord(fp, 0);
     if(mbr == NULL)
     {
         printf("Error: ReadMasterBootRecord Failed\n");
@@ -52,7 +55,8 @@ int ReadDiskImage(char* filename)
         return 1;
     }
 
-    boot = ReadFatBootSector(fp, offsetToBootSector);
+    FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
+    g_fatBoot = boot;
     HexDump(boot, 512);
 
     // Fat Table ------------------------------------------------------------------------------
@@ -69,7 +73,8 @@ int ReadDiskImage(char* filename)
     printf("%d\n", sector_size);
     printf("%d\n", offsetToFatTable);
 
-    fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
+    FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
+    g_fatTable = fat;
     if(fat == NULL) 
     {
         printf("Error: ReadFatTable Failed\n");
@@ -81,12 +86,15 @@ int ReadDiskImage(char* filename)
     // Root Directory -------------------------------------------------------------------------
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
 
-    root = ReadFatRootDirectory(fp, offsetToRootDir, count);
+    ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, boot->fat_root_directory_entries);
+    g_rootDir = root;
     if(root == NULL)
     {
         printf("Error: ReadFatRootDirectory Failed\n");
         return 1;
     }
+
+    g_offsetToDataClusters = offsetToRootDir + (boot->fat_root_directory_entries * sizeof(ROOT_ENTRY));
 
     HexDump(root, 100);
 
@@ -270,10 +278,12 @@ int GetDirectorySize(char* directory)
     //3.return directory size (number of clusters) * (size of 1 cluster which is 512) 
 }
 
+ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
+
 /*Luke & prof.Tallman*/
 ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 {
-    // DONE 1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
+    //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
     //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
     //3.read ROOT_ENTRY to find first cluster of first directory entry
     //4.follow up until reaching EOF
@@ -282,31 +292,98 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     //7.repeat step 3-5. Until we get to the last one
     //8.return that ROOT_ENTRY
 
+    int entries = g_fatBoot->fat_root_directory_entries;
+
+    ROOT_DIR* dir = g_rootDir;
+
+    ROOT_ENTRY* entry = NULL;
+
     char str[strlen(fullDirectory)];
     strcpy(str, fullDirectory);
-    char delimiter[] = "/";
+    const char delimiter[] = "/";
     char* ptr = strtok(str, delimiter);
+
+    void* buffer;
+    int size;
 
     while(ptr != NULL)
 	{
-		printf("'%s'\n", ptr);
-		ptr = strtok(NULL, delimiter);
-	}
+		printf("DIR: %s\n", ptr);
+        entry = FindMatchingEntryName(ptr, dir, entries);
+        if (entry == NULL)
+            return NULL;
 
-	printf("\n");
-
-    printf("%d\n", sizeof(root));
-    for(int i = 0; i < sizeof(root); i++)
-    {
-        for(int j = 0; j < 8; j++)
+        printf("ENTRY: %p\n", entry);
+        if((entry->file_attribute & 0x10) > 0)
         {
-            printf("%c", (char)root->data[i].filename[j]);
+            char* data = ReadFileContents(entry, buffer, size);
+            buffer = data;            
+            dir = (ROOT_DIR*)buffer;
+            entries = size / sizeof(ROOT_ENTRY);
         }
-        printf("\n");
-    }
+        else
+            return entry;
 
+        ptr = strtok(NULL, delimiter);
+	}
+    return entry;
+}
+
+const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3]);
+static void RemoveTrailingSpaces(char* fat_filename_buffer);
+
+ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
+{
+    ROOT_ENTRY* entry = dir->data;
+
+    for(int i = 0; entry->filename[0] != '\0' && i < entries; i++)
+    {
+        if ((entry->file_attribute & 0x08) == 0) 
+        {
+            const char* fullFileName = EightDotThreeString(entry->filename, entry->file_exetension);
+
+            for(int i = 0; i < strlen(filename); i++)
+                filename[i] = toupper(filename[i]);
+
+            if(strcmp(fullFileName, filename) == 0)
+                return entry;
+        }
+        entry++;
+    }
     return NULL;
 }
+
+static void RemoveTrailingSpaces(char* fat_filename_buffer)
+{
+    assert(fat_filename_buffer != NULL);
+    int end = strlen(fat_filename_buffer);
+    assert(end <= 12);
+
+    // Substutute NULLs for an trailing spaces
+    int i = end - 1;
+    while(i >= 0 && fat_filename_buffer[i] == ' ')
+    {
+        fat_filename_buffer[i] = '\0';
+        i--;
+    }
+}
+
+const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
+{
+    static char full_filename[13] = {0};
+    memset(full_filename, 0, sizeof(full_filename));
+    strncat(full_filename, (char*)name, 8);
+    RemoveTrailingSpaces(full_filename);
+
+    if (ext[0] != ' ')
+    {
+        strcat(full_filename, ".");
+        strncat(full_filename, (char*)ext, 3);
+        RemoveTrailingSpaces(full_filename);
+    }
+    return full_filename;
+}
+
 
 /*Alex*/
 char* GetFileData(char* targetFile)
@@ -318,13 +395,67 @@ char* GetFileData(char* targetFile)
     //5.return the buffer
 }
 
-/*Ali*/
-char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
+//Ali - ReadFileContents
+//
+//Searches through FAT to find pointers to the file's data and seeks to it to then reads all of the data into a buffer which gets returned.
+char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
 {
-    //1.read ROOT_ENTRY to find first cluster
-    //2.follow up until reaching EOF
-    //3.read correspond cluster in data region
-    //4.load the data from clusters into the buffer
-    //5.return the buffer
+    // How many bytes are left
+    int remaining = size;
+    // Buffer Curr
+    void* buffer_pointer = buffer;
+    // Amount of bytes read from buffer
+    int read_c;
+    // Amount of bytes seeked into buffer
+    int seek_rc;
+
+    //1. Read ROOT_ENTRY to find first cluster.
+
+    // Cluster Curr
+    FAT_TABLE_ENTRY clusterPointer = entry->first_cluster;
+    // Offset from data to cluster
+    long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
+
+    //2. Follow up until reaching EOF
+    while (clusterPointer < 0xFFF0 && remaining > 0){
+        
+        //3. Seek and read correspond cluster in data region
+
+        seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
+
+        // Error Checking
+
+        // If fseek returns 0, it is then successful. If it returns a nonzero, it has failed.
+        if (seek_rc != 0){
+            printf("fseek failed, did not reach correct location.\n");
+            return NULL;
+        }
+
+        if (remaining>512){
+            // Reading 512 bytes into Buffer
+            read_c = fread(buffer_pointer, 1, 512, g_filePointer);
+        }
+        else
+        {
+            // Reading Last bit of Buffer
+            read_c = fread(buffer_pointer, 1, remaining, g_filePointer);
+        }
+        // If fread returns 0 then nothing has been read.
+        if (read_c == 0)
+        {
+            printf("Unable to fread into buffer");
+            return NULL;
+        }
+
+        //Updating pointers/counters
+        buffer_pointer+=512;
+        remaining-=512;
+
+        //4. Get next cluster from FAT
+        clusterPointer = g_fatTable->Table[clusterPointer];
+    }
+
+    //5. Return the buffer
+    return buffer;    
 }
 
