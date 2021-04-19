@@ -53,7 +53,7 @@ int ReadDiskImage(char* filename)
     if (fp == NULL)
     {
         printf("Error: Could not open binary disk image: '%s'\n", filename);
-        return 1;
+        return UNREADABLE;
     }
 
     // Master Boot Record ---------------------------------------------------------------------
@@ -61,9 +61,9 @@ int ReadDiskImage(char* filename)
     if(mbr == NULL)
     {
         printf("Error: ReadMasterBootRecord Failed\n");
-        return 1;
+        return UNREADABLE;
     }
-    HexDump(mbr, 512);
+    // HexDump(mbr, 512);
 
     // Boot Sector ----------------------------------------------------------------------------
     int offsetToBootSector = 0;
@@ -82,12 +82,12 @@ int ReadDiskImage(char* filename)
     if(offsetToBootSector == 0)
     {
         printf("Error: Could not find BootSector in MBR\n");
-        return 1;
+        return UNREADABLE;
     }
 
     FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
     g_fatBoot = boot;
-    HexDump(boot, 512);
+    // HexDump(boot, 512);
 
     // Fat Table ------------------------------------------------------------------------------
 
@@ -98,17 +98,17 @@ int ReadDiskImage(char* filename)
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
     // Print debug data (TEMP, TO BE REMOVED IN FUTURE)
-    printf("%d\n", count);
-    printf("%d\n", fat_sectors);
-    printf("%d\n", sector_size);
-    printf("%d\n", offsetToFatTable);
+    // printf("%d\n", count);
+    // printf("%d\n", fat_sectors);
+    // printf("%d\n", sector_size);
+    // printf("%d\n", offsetToFatTable);
 
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     g_fatTable = fat;
     if(fat == NULL)
     {
         printf("Error: ReadFatTable Failed\n");
-        return 1;
+        return UNREADABLE;
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
@@ -121,7 +121,7 @@ int ReadDiskImage(char* filename)
     if(root == NULL)
     {
         printf("Error: ReadFatRootDirectory Failed\n");
-        return 1;
+        return UNREADABLE;
     }
 
     g_offsetToDataClusters = offsetToRootDir + (boot->fat_root_directory_entries * sizeof(ROOT_ENTRY));
@@ -370,13 +370,20 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 char* GetFileData(char* targetFile)
 {
     //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
-    ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    ROOT_ENTRY* entry = GetDirEntry(targetFile);
+    if (entry == NULL)
+    {
+        return NULL;
+    }
     //2.get file size or directory size using GetFileSize()/GetDirectorySize()
     int fileSize = GetFileSize(targetFile);
     //3.malloc the buffer with file size/directory size
     char* buffer = (char*)malloc(fileSize); 
     //4.read the data into the buffer using ReadFileContents()
     buffer = ReadFileContents(entry, buffer, fileSize); 
+    printf("%d\n",fileSize);
+    
+    HexDump(buffer, fileSize);
     //5.return the buffer
     return buffer;
 }
