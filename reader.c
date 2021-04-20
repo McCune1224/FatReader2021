@@ -40,7 +40,7 @@ int ReadDiskImage(char* filename)
 
     // Iterate through all 4 Partitions of the Master Boot Record
     for(int i = 0; i < 4; i++)
-    {   
+    {
         // Check if partition is FAT16 or FAT16B
         if(mbr->list[i].type == 0x04 || mbr->list[i].type == 0x06)
         {
@@ -62,9 +62,9 @@ int ReadDiskImage(char* filename)
     // Fat Table ------------------------------------------------------------------------------
 
     // Get required parameters for ReadFatTable using the FAT_BOOT structure
-    int count = boot->number_of_file_allocation_table;                  
-    int fat_sectors = boot->logical_sectors_per_alloc_table;          
-    int sector_size = boot->bytes_per_sector;   
+    int count = boot->number_of_file_allocation_table;
+    int fat_sectors = boot->logical_sectors_per_alloc_table;
+    int sector_size = boot->bytes_per_sector;
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
     // Print debug data (TEMP, TO BE REMOVED IN FUTURE)
@@ -75,7 +75,7 @@ int ReadDiskImage(char* filename)
 
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     g_fatTable = fat;
-    if(fat == NULL) 
+    if(fat == NULL)
     {
         printf("Error: ReadFatTable Failed\n");
         return 1;
@@ -119,25 +119,25 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
         printf("fseek failed, did not reach correct location\n");
         return NULL;
     }
-    
+
     char* buffer = (char*)malloc(sizeof(MBR));
     if (buffer == NULL) //when buffer equals null, it will return a null byte which indicates lack of memory
     {
         printf("Error, not enough memory\n");
         return NULL;
     }
-    
-    int total_count = fread(buffer, 1, sizeof(MBR), fp); 
+
+    int total_count = fread(buffer, 1, sizeof(MBR), fp);
     //HexDump(buffer, total_count);
     //printf("----------------------------\n");
-    //int total_count2 = fread(buffer, 1, sizeof(MBR), fp); 
+    //int total_count2 = fread(buffer, 1, sizeof(MBR), fp);
     //HexDump(buffer, total_count2);
     //printf("%d\n", total_count2);
 
     if (total_count < sizeof(MBR)) //if the total count is less than the size of MBR, it wont be able to read the contents of the file
     {
         printf("The contents of the file are not able to be read\n");
-        return NULL; 
+        return NULL;
     }
 
     return (MBR*)buffer;
@@ -179,7 +179,7 @@ FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 
 //Ali - ReadFatTable
 //
-//Seeks to specified offset of given fat file. 
+//Seeks to specified offset of given fat file.
 //Then calculates the size of needed buffer to read from the file from the previously stated offset and returns a pointer to the read buffer.
 //Error checks a long the way.
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
@@ -192,14 +192,14 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         printf("Could not find the data at given offset, %i\n", offset);
         return NULL;
     }
-    
+
     //Calculating size to read
     int size = count*(fat_sectors * sector_size);
     //        count * 1 Fat Table Entry
 
     //Creating Buffer
     char* buffer = (char*)malloc(size);
-        
+
     //Memory Allocation Error Check
     if (buffer == NULL)
     {
@@ -217,7 +217,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
         free(buffer);
         return NULL;
     }
-    
+
     return (FAT_TABLE*)buffer;
 }
 
@@ -236,7 +236,7 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
        printf("Read Root Directory ERROR! Not enough memory!");
        return NULL;
    }
-    
+
    int seek_rc = fseek(fp, offset, SEEK_SET);
 
    //fseek error check
@@ -259,23 +259,65 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
        free(buffer);
        return NULL;
    }
-  
+
    return (ROOT_DIR*)buffer;
 }
 
+#define DIRECTORY_MASK 0x10
+
 /*Kevin*/
-int GetFileSize(char* filename)
+//uses 32 bits (4 bytes)
+uint32_t GetFileSize(char* filename)
 {
-    //1.get the correct root_entry.
-    //2.return file size from that entry.
+    //call ROOT_ENTRY* entry GetRootEntry function
+    ROOT_ENTRY* entry = GetRootEntry(filename);
+    return GetFileSizeFromEntry(entry);
+}
+
+uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
+{
+    //error checking for file
+    //if file does not exist, there will be no entry available
+    if (entry == NULL)
+    {
+        printf("File does not exist, root_entry not available\n");
+
+        // temporary error code for entry
+        return 0;
+    }
+
+    //DIRECTORY MASK 0X10
+    //Determines whether its a file or a directory
+    if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
+    {
+        return GetDirectorySize(filename);
+    }
+    else
+    {
+        //returns entry file size
+        return entry->file_size;
+    }
 }
 
 /*Yunhu*/
 int GetDirectorySize(char* directory)
 {
-    //1.get the correct root_entry.
-    //2.read FAT_TABLE to follow up untill reaching EOF
-    //3.return directory size (number of clusters) * (size of 1 cluster which is 512) 
+    ROOT_ENTRY* entry = GetRootEntry(directory);
+
+    int count = 0;
+    int cluster = entry->first_cluster;
+
+    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
+    FAT_TABLE_ENTRY* next = &base[cluster];
+
+    while (cluster < 0xFFF8)
+    {
+        count++;
+        cluster = *next;
+        next = &base[cluster];
+    }
+
+    return count * 512;
 }
 
 ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
@@ -303,8 +345,8 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     const char delimiter[] = "/";
     char* ptr = strtok(str, delimiter);
 
-    void* buffer;
-    int size;
+    //void* buffer;
+    //int size;
 
     while(ptr != NULL)
 	{
@@ -313,11 +355,20 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
         if (entry == NULL)
             return NULL;
 
+        //HexDump(entry, sizeof(ROOT_ENTRY));
+
         printf("ENTRY: %p\n", entry);
         if((entry->file_attribute & 0x10) > 0)
         {
+            printf("Got HERE\n");
+            //HexDump(entry, sizeof(ROOT_ENTRY));
+            int size = GetFileSize(entry);
+            printf("%d\n", size);
+            char* buffer = malloc(size);
+
             char* data = ReadFileContents(entry, buffer, size);
-            buffer = data;            
+            HexDump(buffer, size);
+            buffer = data;
             dir = (ROOT_DIR*)buffer;
             entries = size / sizeof(ROOT_ENTRY);
         }
@@ -338,7 +389,7 @@ ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
 
     for(int i = 0; entry->filename[0] != '\0' && i < entries; i++)
     {
-        if ((entry->file_attribute & 0x08) == 0) 
+        if ((entry->file_attribute & 0x08) == 0)
         {
             const char* fullFileName = EightDotThreeString(entry->filename, entry->file_exetension);
 
@@ -418,7 +469,7 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
 
     //2. Follow up until reaching EOF
     while (clusterPointer < 0xFFF0 && remaining > 0){
-        
+
         //3. Seek and read correspond cluster in data region
 
         seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
@@ -456,6 +507,5 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
     }
 
     //5. Return the buffer
-    return buffer;    
+    return buffer;
 }
-

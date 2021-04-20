@@ -11,9 +11,9 @@ uint8_t partitionNum = 1;
 
 int main(int argc, char* argv[])
 {
-   //.dd file to read in 
+   //.dd file to read in
     char* filename = "dfr-16-fat.dd";
- 
+
 	printf("\n");
 	int result = ReadDiskImage(filename);
 	printf("%d\n", result);
