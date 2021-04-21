@@ -334,14 +334,23 @@ uint32_t GetFileSize(char* filename)
 /*Yunhu*/
 int GetDirectorySize(char* directory)
 {
+    //Get target root entry
     ROOT_ENTRY* entry = GetDirEntry(directory);
+
+    //error checking
+    if (entry == NULL)
+    {
+        printf("Directory does not exist.");
+        return 0;
+    }
 
     int count = 0;
     int cluster = entry->first_cluster;
 
-    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
-    FAT_TABLE_ENTRY* next = &base[cluster];
+    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;//store fat table
+    FAT_TABLE_ENTRY* next = &base[cluster];//store next cluster
 
+    //loop entill EOF
     while (cluster < 0xFFF8)
     {
         count++;
