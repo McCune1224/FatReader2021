@@ -313,7 +313,7 @@ uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
 
     //DIRECTORY MASK 0X10
     //Determines whether its a file or a directory
-    if(entry->file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
+    if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
     {
         return GetDirectorySizeFromEntry(entry);
     }
@@ -372,6 +372,11 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     const char delimiter[] = "/";
     char* ptr = strtok(str, delimiter);
 
+    //uint32_t size;
+
+    void* data;
+    uint32_t size;
+
     while(ptr != NULL)
 	{
 		printf("DIR: %s\n", ptr);
@@ -379,6 +384,7 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
         printf("%d\n", entries);
 
         entry = FindMatchingEntryName(ptr, dir, entries);
+        //entry = Function0(dir, entries, ptr);
         if (entry == NULL)
         {
             printf("Entry: NULL\n");
@@ -392,24 +398,40 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
         if((entry->file_attribute & 0x10) > 0) // If is Directory
         {
             //HexDump(entry, sizeof(ROOT_ENTRY));
-            int size = GetFileSizeFromEntry(entry);
-            char* buffer = (char*)malloc(size);
-            buffer = ReadFileContents(entry, buffer, size);
+
+            //int size = GetDirectorySizeFromEntry(entry); // <--- Problem
+            //int rc = Function5(entry, &size);
+            //printf("%d\n", size);
+
+            //char* buffer = (char*)malloc(size);
+            //memset(buffer, 0, size);
+
+            //buffer = ReadFileContents(entry, buffer, size);
+
+            int rc = Function4(entry, &data, &size);
 
             printf("%d\n", size);
-            HexDump(buffer, size);
+            HexDump(data, size);
+            
+            if (rc != EXIT_SUCCESS)
+            {
+                printf("Error: Cannot read directory '%s'\n", ptr);
+                return NULL;
+            }
 
-            dir = (ROOT_DIR*)buffer;
+            dir = (ROOT_DIR*)data;
             entries = size / sizeof(ROOT_ENTRY);
+
+            ///------------------
         }
         else
         {
-            return entry;
+            return entry; // Return File
         }
 
         ptr = strtok(NULL, delimiter);
 	}
-    return entry;
+    return entry; // Return Directory
 }
 
 ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
