@@ -365,8 +365,100 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
     //7.repeat step 3-5. Until we get to the last one
     //8.return that ROOT_ENTRY
+
+    int entries = g_fatBoot->fat_root_directory_entries;
+
+    ROOT_DIR* dir = g_rootDir;
+
+    ROOT_ENTRY* entry = NULL;
+
+    char str[strlen(fullDirectory)];
+    strcpy(str, fullDirectory);
+    const char delimiter[] = "/";
+    char* ptr = strtok(str, delimiter);
+
+    //uint32_t size;
+
+    void* data;
+    uint32_t size;
+
+    while(ptr != NULL)
+	{
+		printf("DIR: %s\n", ptr);
+        printf("%d\n", dir);
+        printf("%d\n", entries);
+
+        entry = FindMatchingEntryName(ptr, dir, entries);
+        //entry = Function0(dir, entries, ptr);
+        if (entry == NULL)
+        {
+            printf("Entry: NULL\n");
+            return NULL;
+        }
+
+        // Print Entry
+        printf("ENTRY: %p\n", entry);
+        HexDump(entry, sizeof(ROOT_ENTRY));
+
+        if((entry->file_attribute & 0x10) > 0) // If is Directory
+        {
+            //HexDump(entry, sizeof(ROOT_ENTRY));
+
+            //int size = GetDirectorySizeFromEntry(entry); // <--- Problem
+            //int rc = Function5(entry, &size);
+            //printf("%d\n", size);
+
+            //char* buffer = (char*)malloc(size);
+            //memset(buffer, 0, size);
+
+            //buffer = ReadFileContents(entry, buffer, size);
+
+            int rc = Function4(entry, &data, &size);
+
+            printf("%d\n", size);
+            HexDump(data, size);
+            
+            if (rc != EXIT_SUCCESS)
+            {
+                printf("Error: Cannot read directory '%s'\n", ptr);
+                return NULL;
+            }
+
+            dir = (ROOT_DIR*)data;
+            entries = size / sizeof(ROOT_ENTRY);
+
+            ///------------------
+        }
+        else
+        {
+            return entry; // Return File
+        }
+
+        ptr = strtok(NULL, delimiter);
+	}
+    return entry; // Return Directory
 }
 
+ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
+{
+    ROOT_ENTRY* entry = dir->data;
+
+    for(int i = 0; entry->filename[0] != '\0' && i < entries; i++)
+    {
+        if ((entry->file_attribute & 0x08) == 0)
+        {
+            const char* fullFileName = EightDotThreeString(entry->filename, entry->file_exetension);
+
+            for(int i = 0; i < strlen(filename); i++)
+                filename[i] = toupper(filename[i]);
+
+            if(strcmp(fullFileName, filename) == 0)
+                return entry;
+        }
+        entry++;
+    }
+    return NULL;
+}
 /*Alex*/
 char* GetFileData(char* targetFile)
 {
