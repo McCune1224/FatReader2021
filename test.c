@@ -11,7 +11,7 @@ uint8_t partitionNum = 1;
 
 int main(int argc, char* argv[])
 {
-   //.dd file to read in
+    //.dd file to read in
     char* filename = "dfr-16-fat.dd";
 
 	printf("\n");
@@ -21,7 +21,8 @@ int main(int argc, char* argv[])
     char* fullDirectory = (char*)malloc(256);
     //strcpy(fullDirectory, "/2-DIR-01/2-01-0~1.txt");
     strcpy(fullDirectory, "/2-DIR-02/2-02-00001.txt");
-    ROOT_ENTRY* entry = GetDirEntry(fullDirectory);
+    //ROOT_ENTRY* entry = GetRootEntry(fullDirectory); // My Code
+    ROOT_ENTRY* entry = GetDirEntry(fullDirectory);  // Talman's Code
     
     printf("\nSPACE\n\n");
     //const char* fullFileName = EightDotThreeString(entry->filename, entry->file_exetension);

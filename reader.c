@@ -405,7 +405,6 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 
             //char* buffer = (char*)malloc(size);
             //memset(buffer, 0, size);
-
             //buffer = ReadFileContents(entry, buffer, size);
 
             int rc = Function4(entry, &data, &size);
