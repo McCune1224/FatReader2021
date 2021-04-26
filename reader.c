@@ -94,14 +94,9 @@ int ReadDiskImage(char* filename)
         return UNREADABLE;
     }
 
-<<<<<<< HEAD
-    boot = ReadFatBootSector(fp, offsetToBootSector);
-    HexDump(boot, 512);
-=======
     FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
     g_fatBoot = boot;
     // HexDump(boot, 512);
->>>>>>> 11924fd2a419c4fc5d6388d37021865a1e6ab437
 
     // Fat Table ------------------------------------------------------------------------------
 
@@ -117,14 +112,9 @@ int ReadDiskImage(char* filename)
     // printf("%d\n", sector_size);
     // printf("%d\n", offsetToFatTable);
 
-<<<<<<< HEAD
-    fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
-    if(fat == NULL) 
-=======
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     g_fatTable = fat;
     if(fat == NULL)
->>>>>>> 11924fd2a419c4fc5d6388d37021865a1e6ab437
     {
         printf("Error: ReadFatTable Failed\n");
         return UNREADABLE;
@@ -135,12 +125,8 @@ int ReadDiskImage(char* filename)
     // Root Directory -------------------------------------------------------------------------
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
 
-<<<<<<< HEAD
-    root = ReadFatRootDirectory(fp, offsetToRootDir, count);
-=======
     ROOT_DIR* root = ReadFatRootDirectory(fp, offsetToRootDir, boot->fat_root_directory_entries);
     g_rootDir = root;
->>>>>>> 11924fd2a419c4fc5d6388d37021865a1e6ab437
     if(root == NULL)
     {
         printf("Error: ReadFatRootDirectory Failed\n");
