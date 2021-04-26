@@ -49,7 +49,7 @@ void cat(char* path)
 {
 
 }
-//ALex
+//Alex
 void cd(char* path)
 {
 
