@@ -28,13 +28,6 @@ static uint32_t g_offsetToDataClusters;
 
 
 ROOT_ENTRY* GetDirEntry(char* filename);
-ROOT_ENTRY* Function0(ROOT_DIR* subroot, int num_entries, char* filename);
-const char* Function1(const uint8_t name[8], const uint8_t ext[3]);
-static void Function2(char* fat_filename_buffer);
-const char* Function3(const char* path);
-int Function4(ROOT_ENTRY* entry, void** data, uint32_t* size);
-int Function5(ROOT_ENTRY* entry, uint32_t* entry_size);
-static int Function6(int start_cluster);
 
 typedef struct _FAT16_ENTRY
 {
@@ -389,7 +382,6 @@ char* GetFileData(char* targetFile)
     char* buffer = (char*)malloc(fileSize); 
     //4.read the data into the buffer using ReadFileContents()
     buffer = ReadFileContents(entry, buffer, fileSize); 
-    printf("%d\n",fileSize);
     
     HexDump(buffer, fileSize);
     //5.return the buffer
@@ -480,14 +472,12 @@ ROOT_ENTRY* GetDirEntry(char* filename)
     char* token = strtok(filename, sep);
     while(token != NULL)
     {
-        printf("Token=%s\n", token);
         entry = Function0(root, num_entries, token);
         if (entry == NULL)
         {
             return NULL;
         }
 
-        printf("Entry=%p\n", entry);
         if ((entry->file_attribute & FILE_ATTRIBUTE_DIRECTORY) > 0)
         {
             int rc = Function4(entry, &data, &size);
@@ -512,208 +502,4 @@ ROOT_ENTRY* GetDirEntry(char* filename)
     // if we get here, we've exhausted all the directories that the user gave
     // us and are ready to return the final ROOT_ENTRY*
     return entry;
-}
-
-
-ROOT_ENTRY* Function0(ROOT_DIR* subroot, int num_entries, char* filename)
-{
-    assert(subroot != NULL);
-    assert(num_entries != 0);
-    assert(filename != NULL);
-
-    // Search through every entry in this directory for a matching filename
-    ROOT_ENTRY* dir = subroot->data;
-    for(int i = 0; i < num_entries && dir->filename[0] != '\0'; i++)
-    {
-        HexDump(dir, sizeof(ROOT_ENTRY));
-        // Ignore Long File Names and Volumes... LFNs include the Volume Bit
-        if ((dir->file_attribute & FILE_ATTRIBUTE_VOLUME) == 0)
-        {
-            const char* test = Function1(dir->filename, dir->file_exetension);
-
-            // FAT filenames are always uppercase on disk
-            for(int i = 0; i < strlen(filename); i++)
-            {
-                filename[i] = toupper(filename[i]);
-            }
-
-            printf("%s ? %s\n", test, filename);
-            if (strcmp(test, filename) == 0)
-            {
-                return dir;
-            }
-        }
-        dir++;
-    }
-
-    return NULL;
-}
-
-
-const char* Function1(const uint8_t name[8], const uint8_t ext[3])
-{
-    static char full_filename[13] = {0};
-    memset(full_filename, 0, sizeof(full_filename));
-    strncat(full_filename, (char*)name, 8);
-    Function2(full_filename);
-
-    if (ext[0] != ' ')
-    {
-        strcat(full_filename, ".");
-        strncat(full_filename, (char*)ext, 3);
-        Function2(full_filename);
-    }
-    return full_filename;
-}
-
-
-static void Function2(char* fat_filename_buffer)
-{
-    assert(fat_filename_buffer != NULL);
-    int end = strlen(fat_filename_buffer);
-    assert(end <= 12);
-
-    // Substitute NULLs for any trailing spaces
-    int i = end - 1;
-    while(i >= 0 && fat_filename_buffer[i] == ' ')
-    {
-        fat_filename_buffer[i] = '\0';
-        i--;
-    }
-}
-
-
-const char* Function3(const char* path)
-{
-    if (strchr(path, '\\') != NULL)
-    {
-        return "\\";
-    }
-    else if (strchr(path, '/') != NULL)
-    {
-       return "/";
-    }
-    else
-    {
-        return "\\";
-    }
-}
-
-
-int Function4(ROOT_ENTRY* entry, void** data, uint32_t* size)
-{
-    assert(entry != NULL);
-    assert(data != NULL);
-    assert(size != NULL);
-
-    uint32_t allocation_size = 0;
-    if (Function5(entry, &allocation_size) != EXIT_SUCCESS)
-    {
-        printf("Error: Cannot determine size directory entry\n");
-        return EXIT_FAILURE;
-    }
-
-    void* buffer = malloc(allocation_size);
-    assert(buffer != NULL);
-    memset(buffer, 0, allocation_size);
-
-    long int data_base = g_offsetToDataClusters;
-    int cluster_size   = g_fatBoot->sectors_per_cluster *
-                         g_fatBoot->bytes_per_sector;
-
-    uint32_t read_remaining = allocation_size;
-    void*    read_ptr = buffer;
-    int      read_cnt;
-    if (read_remaining > cluster_size)
-    {
-        read_cnt = cluster_size;
-    }
-    else
-    {
-        read_cnt = read_remaining;
-    }
-
-    uint16_t cluster = entry->first_cluster;
-    FAT_TABLE_ENTRY* fat_base = (FAT_TABLE_ENTRY*)g_fatTable;
-    FAT_TABLE_ENTRY* fat_next = &fat_base[cluster];
-    while(cluster < 0xFFF0 && read_remaining > 0)
-    {
-        long int seek_offset = data_base + (cluster - 2) * cluster_size;
-        int rc = fseek(g_filePointer, seek_offset, SEEK_SET);
-        if (rc != 0)
-        {
-            char* msg = "Error: Cannot seek to cluster %d at offset %ld\n";
-            printf(msg, cluster, seek_offset);
-            free(buffer);
-            return EXIT_FAILURE;
-        }
-
-        if (read_remaining > cluster_size)
-        {
-            read_cnt = cluster_size;
-        }
-        else
-        {
-            read_cnt = read_remaining;
-        }
-
-        int count = fread(read_ptr, sizeof(char), read_cnt, g_filePointer);
-        if (count != read_cnt)
-        {
-            char* msg = "Error: Expected %d for Cluster but got %d\n";
-            printf(msg, read_cnt, count);
-            free(buffer);
-            return EXIT_FAILURE;
-        }
-
-        read_ptr += count;
-        read_remaining -= count;
-        cluster = *fat_next;
-        fat_next = &fat_base[cluster];
-    }
-
-    *data = buffer;
-    *size = allocation_size;
-    return EXIT_SUCCESS;
-}
-
-
-int Function5(ROOT_ENTRY* entry, uint32_t* entry_size)
-{
-    assert(entry != NULL);
-    assert(entry_size != NULL);
-
-    if ((entry->file_attribute & FILE_ATTRIBUTE_DIRECTORY) == 0)
-    {
-        *entry_size = entry->file_size;
-        return EXIT_SUCCESS;
-    }
-    else
-    {
-        int cluster_count = Function6(entry->first_cluster);
-        int cluster_size  = g_fatBoot->sectors_per_cluster;
-        int sector_size   = g_fatBoot->bytes_per_sector;
-        *entry_size       = cluster_count * cluster_size * sector_size;
-        return EXIT_SUCCESS;
-    }
-}
-
-
-static int Function6(int start_cluster)
-{
-    assert(g_fatTable != NULL);
-
-    int count  = 0;
-    int cluster = start_cluster;
-
-    FAT_TABLE_ENTRY* fat_base = (FAT_TABLE_ENTRY*)g_fatTable;
-    FAT_TABLE_ENTRY* fat_next = &fat_base[cluster];
-    while(cluster < 0xFFF0)
-    {
-        count++;
-        cluster  = *fat_next;
-        fat_next = &fat_base[cluster];
-    }
-
-    return count;
 }
