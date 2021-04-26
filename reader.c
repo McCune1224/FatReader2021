@@ -328,7 +328,7 @@ uint32_t GetFileSize(char* filename)
 int GetDirectorySize(char* directory)
 {
     //Get target root entry
-    ROOT_ENTRY* entry = GetDirEntry(directory);
+    ROOT_ENTRY* entry = GetRootEntry(directory);
 
     //error checking
     if (entry == NULL)
@@ -371,7 +371,7 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 char* GetFileData(char* targetFile)
 {
     //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
-    ROOT_ENTRY* entry = GetDirEntry(targetFile);
+    ROOT_ENTRY* entry = GetRootEntry(targetFile);
     if (entry == NULL)
     {
         return NULL;
