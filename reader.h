@@ -2,6 +2,10 @@
 #define READER_HEADER
 #include <stdint.h>
 
+#define UNREADABLE 1 
+
+
+
 // Partition Type
 typedef struct _PARTITION
 {
@@ -105,7 +109,7 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
 //stage 2
 
-int GetFileSize(char* filename);
+uint32_t GetFileSize(char* filename);
 
 int GetDirectorySize(char* directory);
 
