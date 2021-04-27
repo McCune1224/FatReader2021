@@ -16,7 +16,8 @@ int main(int argc, char* argv[])
 
 	printf("\n");
 	int result = ReadDiskImage(filename);
-	//printf("%d\n", result);
+
+  //printf("%d\n", result);
 
     // ROOT_ENTRY* test = GetRootEntry("/0-DIR-01");
     // //printf("%p\n", test);

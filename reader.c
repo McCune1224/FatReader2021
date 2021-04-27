@@ -236,7 +236,7 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
     //Fat Table Seek Error
     if(seek_rc != 0)
     {
-        printf("Could not find the data at given offset, %i\n", offset);
+        printf("Could not find the data at given offset, %li\n", offset);
         return NULL;
     }
 
@@ -334,7 +334,7 @@ uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
 
     //DIRECTORY MASK 0X10
     //Determines whether its a file or a directory
-    if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
+    if((entry-> file_attribute) & (DIRECTORY_MASK == DIRECTORY_MASK))
     {
         return GetDirectorySizeFromEntry(entry);
     }
@@ -390,7 +390,6 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
     //7.repeat step 3-5. Until we get to the last one
     //8.return that ROOT_ENTRY
-
     int entries = g_fatBoot->fat_root_directory_entries;
 
     ROOT_DIR* dir = g_rootDir;

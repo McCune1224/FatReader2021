@@ -143,6 +143,7 @@ char *MediaType(uint8_t byte)
         return "Floppy";
         break;
     }
+    return NULL;
 }
 
 // Kevin
