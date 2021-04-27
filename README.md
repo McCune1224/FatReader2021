@@ -14,6 +14,8 @@ Team Members:
 * Alex McCune
 * Yunhu Xiang
 
+Stage 2 Slides:https://docs.google.com/presentation/d/1Jy8gLT9gnNBVQeR6xrf6DnacX1RCADLgA8syVbqInJo/edit?usp=sharing
+
 # Helper Functions
 
 ```c

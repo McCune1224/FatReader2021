@@ -2,6 +2,10 @@
 #define READER_HEADER
 #include <stdint.h>
 
+#define UNREADABLE 1 
+
+
+
 // Partition Type
 typedef struct _PARTITION
 {

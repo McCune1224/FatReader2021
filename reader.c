@@ -1,9 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+#include <string.h>
+#include <ctype.h>
 #include "reader.h"
 #include "helper.h"
+#include "linked_list.h"
+
+
+
+#define FILE_ATTRIBUTE_READONLY 0x01
+#define FILE_ATTRIBUTE_HIDDEN 0x02
+#define FILE_ATTRIBUTE_SYSTEM 0x04
+#define FILE_ATTRIBUTE_VOLUME 0x08
+#define FILE_ATTRIBUTE_LFN \
+    (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
+     FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
+#define FILE_ATTRIBUTE_DIRECTORY 0x10
+#define FILE_ATTRIBUTE_ARCHIVE 0x20
+
+
+static FILE* g_filePointer;
+static FAT_BOOT* g_fatBoot;
+static FAT_TABLE* g_fatTable;
+static ROOT_DIR* g_rootDir;
+static uint32_t g_offsetToDataClusters;
+
+
+ROOT_ENTRY* GetDirEntry(char* filename);
+
+typedef struct _FAT16_ENTRY
+{
+    uint16_t data;
+} __attribute__((packed)) FAT16_ENTRY;
 
 /******************************************************************************
 **                              ReadDiskImage                                **
@@ -48,7 +77,7 @@ int ReadDiskImage(char* filename)
     if (fp == NULL)
     {
         printf("Error: Could not open binary disk image: '%s'\n", filename);
-        return 1;
+        return UNREADABLE;
     }
 
     // Master Boot Record ---------------------------------------------------------------------
@@ -56,9 +85,9 @@ int ReadDiskImage(char* filename)
     if(mbr == NULL)
     {
         printf("Error: ReadMasterBootRecord Failed\n");
-        return 1;
+        return UNREADABLE;
     }
-    HexDump(mbr, 512);
+    // HexDump(mbr, 512);
 
     // Boot Sector ----------------------------------------------------------------------------
     int offsetToBootSector = 0;
@@ -77,12 +106,12 @@ int ReadDiskImage(char* filename)
     if(offsetToBootSector == 0)
     {
         printf("Error: Could not find BootSector in MBR\n");
-        return 1;
+        return UNREADABLE;
     }
 
     FAT_BOOT* boot = ReadFatBootSector(fp, offsetToBootSector);
     g_fatBoot = boot;
-    HexDump(boot, 512);
+    // HexDump(boot, 512);
 
     // Fat Table ------------------------------------------------------------------------------
 
@@ -93,17 +122,17 @@ int ReadDiskImage(char* filename)
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
     // Print debug data (TEMP, TO BE REMOVED IN FUTURE)
-    printf("%d\n", count);
-    printf("%d\n", fat_sectors);
-    printf("%d\n", sector_size);
-    printf("%d\n", offsetToFatTable);
+    // printf("%d\n", count);
+    // printf("%d\n", fat_sectors);
+    // printf("%d\n", sector_size);
+    // printf("%d\n", offsetToFatTable);
 
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     g_fatTable = fat;
     if(fat == NULL)
     {
         printf("Error: ReadFatTable Failed\n");
-        return 1;
+        return UNREADABLE;
     }
     printf("data: %08x\n", *(unsigned int*)fat);
 
@@ -116,14 +145,14 @@ int ReadDiskImage(char* filename)
     if(root == NULL)
     {
         printf("Error: ReadFatRootDirectory Failed\n");
-        return 1;
+        return UNREADABLE;
     }
 
     g_offsetToDataClusters = offsetToRootDir + (boot->fat_root_directory_entries * sizeof(ROOT_ENTRY));
 
     HexDump(root, 100);
 
-    fclose(fp);
+    //fclose(fp);
     return 0;
 }
 
@@ -288,10 +317,9 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
    return (ROOT_DIR*)buffer;
 }
 
-#define DIRECTORY_MASK 0x10
+//need to define a DIRECTORY_MASK
+#define DIRECTORY_MASK 0X10
 
-/*Kevin*/
-//uses 32 bits (4 bytes)
 uint32_t GetFileSize(char* filename)
 {
     //call ROOT_ENTRY* entry GetRootEntry function
@@ -339,6 +367,13 @@ int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
     FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
     FAT_TABLE_ENTRY* next = &base[cluster];
 
+    int count = 0;
+    int cluster = entry->first_cluster;
+
+    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;//store fat table
+    FAT_TABLE_ENTRY* next = &base[cluster];//store next cluster
+
+    //loop entill EOF
     while (cluster < 0xFFF8)
     {
         count++;
@@ -486,14 +521,26 @@ const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
 }
 
 
+
 /*Alex*/
 char* GetFileData(char* targetFile)
 {
     //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    if (entry == NULL)
+    {
+        return NULL;
+    }
     //2.get file size or directory size using GetFileSize()/GetDirectorySize()
+    int fileSize = GetFileSize(targetFile);
     //3.malloc the buffer with file size/directory size
+    char* buffer = (char*)malloc(fileSize); 
     //4.read the data into the buffer using ReadFileContents()
+    buffer = ReadFileContents(entry, buffer, fileSize); 
+    
+    HexDump(buffer, fileSize);
     //5.return the buffer
+    return buffer;
 }
 
 //Ali - ReadFileContents
@@ -518,10 +565,10 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
     long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
 
     //2. Follow up until reaching EOF
-    while (clusterPointer < 0xFFF0 && remaining > 0){
+    while (clusterPointer < 0xFFF0 && remaining > 0)
+    {
 
         //3. Seek and read correspond cluster in data region
-
         seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
 
         // Error Checking
@@ -558,287 +605,4 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
 
     //5. Return the buffer
     return buffer;
-}
-
-/*
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-*/
-
-ROOT_ENTRY* GetDirEntry(char* filename)
-{
-    assert(filename != NULL);
-
-    ROOT_DIR* root = g_rootDir;
-    int num_entries = g_fatBoot->fat_root_directory_entries;
-
-    ROOT_ENTRY* entry = NULL;
-    void* data;
-    uint32_t size;
-
-    // filename has a series of n tokens separated by slashes
-    // the very last of these tokens might be a filename or a directory
-    // all of the other tokens from 1 through n-1 must be Directories
-
-    const char* sep = Function3(filename);
-    char* token = strtok(filename, sep);
-    while(token != NULL)
-    {
-        printf("Token=%s\n", token);
-        entry = Function0(root, num_entries, token);
-        if (entry == NULL)
-        {
-            return NULL;
-        }
-
-        printf("Entry=%p\n", entry);
-        if ((entry->file_attribute & FILE_ATTRIBUTE_DIRECTORY) > 0)
-        {
-            int rc = Function4(entry, &data, &size);
-            printf("%d\n", size);
-            HexDump(data, size);
-
-            if (rc != EXIT_SUCCESS)
-            {
-                printf("Error: Cannot read directory '%s'\n", token);
-                return NULL;
-            }
-            root = (ROOT_DIR*)data;
-            num_entries = size / sizeof(ROOT_ENTRY);
-        }
-        else
-        {
-            // if we get here, we've reached the final ROOT_ENTRY for this
-            // file and this is what we need to return
-            return entry;
-        }
-
-        token = strtok(NULL, sep);
-    }
-
-    // if we get here, we've exhausted all the directories that the user gave
-    // us and are ready to return the final ROOT_ENTRY*
-    return entry;
-}
-
-
-ROOT_ENTRY* Function0(ROOT_DIR* subroot, int num_entries, char* filename)
-{
-    assert(subroot != NULL);
-    assert(num_entries != 0);
-    assert(filename != NULL);
-
-    // Search through every entry in this directory for a matching filename
-    ROOT_ENTRY* dir = subroot->data;
-    for(int i = 0; i < num_entries && dir->filename[0] != '\0'; i++)
-    {
-        HexDump(dir, sizeof(ROOT_ENTRY));
-        // Ignore Long File Names and Volumes... LFNs include the Volume Bit
-        if ((dir->file_attribute & FILE_ATTRIBUTE_VOLUME) == 0)
-        {
-            const char* test = Function1(dir->filename, dir->file_exetension);
-
-            // FAT filenames are always uppercase on disk
-            for(int i = 0; i < strlen(filename); i++)
-            {
-                filename[i] = toupper(filename[i]);
-            }
-
-            printf("%s ? %s\n", test, filename);
-            if (strcmp(test, filename) == 0)
-            {
-                return dir;
-            }
-        }
-        dir++;
-    }
-
-    return NULL;
-}
-
-
-const char* Function1(const uint8_t name[8], const uint8_t ext[3])
-{
-    static char full_filename[13] = {0};
-    memset(full_filename, 0, sizeof(full_filename));
-    strncat(full_filename, (char*)name, 8);
-    Function2(full_filename);
-
-    if (ext[0] != ' ')
-    {
-        strcat(full_filename, ".");
-        strncat(full_filename, (char*)ext, 3);
-        Function2(full_filename);
-    }
-    return full_filename;
-}
-
-
-static void Function2(char* fat_filename_buffer)
-{
-    assert(fat_filename_buffer != NULL);
-    int end = strlen(fat_filename_buffer);
-    assert(end <= 12);
-
-    // Substitute NULLs for any trailing spaces
-    int i = end - 1;
-    while(i >= 0 && fat_filename_buffer[i] == ' ')
-    {
-        fat_filename_buffer[i] = '\0';
-        i--;
-    }
-}
-
-
-const char* Function3(const char* path)
-{
-    if (strchr(path, '\\') != NULL)
-    {
-        return "\\";
-    }
-    else if (strchr(path, '/') != NULL)
-    {
-       return "/";
-    }
-    else
-    {
-        return "\\";
-    }
-}
-
-
-int Function4(ROOT_ENTRY* entry, void** data, uint32_t* size)
-{
-    assert(entry != NULL);
-    assert(data != NULL);
-    assert(size != NULL);
-
-    uint32_t allocation_size = 0;
-    if (Function5(entry, &allocation_size) != EXIT_SUCCESS)
-    {
-        printf("Error: Cannot determine size directory entry\n");
-        return EXIT_FAILURE;
-    }
-
-    void* buffer = malloc(allocation_size);
-    assert(buffer != NULL);
-    memset(buffer, 0, allocation_size);
-
-    long int data_base = g_offsetToDataClusters;
-    int cluster_size   = g_fatBoot->sectors_per_cluster *
-                         g_fatBoot->bytes_per_sector;
-
-    uint32_t read_remaining = allocation_size;
-    void*    read_ptr = buffer;
-    int      read_cnt;
-    if (read_remaining > cluster_size)
-    {
-        read_cnt = cluster_size;
-    }
-    else
-    {
-        read_cnt = read_remaining;
-    }
-
-    uint16_t cluster = entry->first_cluster;
-    FAT_TABLE_ENTRY* fat_base = (FAT_TABLE_ENTRY*)g_fatTable;
-    FAT_TABLE_ENTRY* fat_next = &fat_base[cluster];
-    while(cluster < 0xFFF0 && read_remaining > 0)
-    {
-        long int seek_offset = data_base + (cluster - 2) * cluster_size;
-        int rc = fseek(g_filePointer, seek_offset, SEEK_SET);
-        if (rc != 0)
-        {
-            char* msg = "Error: Cannot seek to cluster %d at offset %ld\n";
-            printf(msg, cluster, seek_offset);
-            free(buffer);
-            return EXIT_FAILURE;
-        }
-
-        if (read_remaining > cluster_size)
-        {
-            read_cnt = cluster_size;
-        }
-        else
-        {
-            read_cnt = read_remaining;
-        }
-
-        int count = fread(read_ptr, sizeof(char), read_cnt, g_filePointer);
-        if (count != read_cnt)
-        {
-            char* msg = "Error: Expected %d for Cluster but got %d\n";
-            printf(msg, read_cnt, count);
-            free(buffer);
-            return EXIT_FAILURE;
-        }
-
-        read_ptr += count;
-        read_remaining -= count;
-        cluster = *fat_next;
-        fat_next = &fat_base[cluster];
-    }
-
-    *data = buffer;
-    *size = allocation_size;
-    return EXIT_SUCCESS;
-}
-
-
-int Function5(ROOT_ENTRY* entry, uint32_t* entry_size)
-{
-    assert(entry != NULL);
-    assert(entry_size != NULL);
-
-    if ((entry->file_attribute & FILE_ATTRIBUTE_DIRECTORY) == 0)
-    {
-        *entry_size = entry->file_size;
-        return EXIT_SUCCESS;
-    }
-    else
-    {
-        int cluster_count = Function6(entry->first_cluster);
-        int cluster_size  = g_fatBoot->sectors_per_cluster;
-        int sector_size   = g_fatBoot->bytes_per_sector;
-        *entry_size       = cluster_count * cluster_size * sector_size;
-        return EXIT_SUCCESS;
-    }
-}
-
-
-static int Function6(int start_cluster)
-{
-    assert(g_fatTable != NULL);
-
-    int count  = 0;
-    int cluster = start_cluster;
-
-    FAT_TABLE_ENTRY* fat_base = (FAT_TABLE_ENTRY*)g_fatTable;
-    FAT_TABLE_ENTRY* fat_next = &fat_base[cluster];
-    while(cluster < 0xFFF0)
-    {
-        count++;
-        cluster  = *fat_next;
-        fat_next = &fat_base[cluster];
-    }
-
-    return count;
 }
