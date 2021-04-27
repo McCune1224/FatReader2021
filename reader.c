@@ -5,8 +5,6 @@
 #include <ctype.h>
 #include "reader.h"
 #include "helper.h"
-#include "linked_list.h"
-
 
 
 #define FILE_ATTRIBUTE_READONLY 0x01
@@ -28,11 +26,6 @@ static uint32_t g_offsetToDataClusters;
 
 
 ROOT_ENTRY* GetDirEntry(char* filename);
-
-typedef struct _FAT16_ENTRY
-{
-    uint16_t data;
-} __attribute__((packed)) FAT16_ENTRY;
 
 /******************************************************************************
 **                              ReadDiskImage                                **
@@ -387,6 +380,8 @@ int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
 /*Luke & prof.Tallman*/
 ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 {
+    
+    
     //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
     //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
     //3.read ROOT_ENTRY to find first cluster of first directory entry
