@@ -38,6 +38,37 @@ typedef struct _FAT16_ENTRY
 **                              ReadDiskImage                                **
 ******************************************************************************/
 
+static FILE* g_filePointer;
+static FAT_BOOT* g_fatBoot;
+static FAT_TABLE* g_fatTable;
+static ROOT_DIR* g_rootDir;
+static uint32_t g_offsetToDataClusters;
+
+#define FILE_ATTRIBUTE_READONLY 0x01
+#define FILE_ATTRIBUTE_HIDDEN 0x02
+#define FILE_ATTRIBUTE_SYSTEM 0x04
+#define FILE_ATTRIBUTE_VOLUME 0x08
+#define FILE_ATTRIBUTE_LFN \
+    (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
+     FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
+#define FILE_ATTRIBUTE_DIRECTORY 0x10
+#define FILE_ATTRIBUTE_ARCHIVE 0x20
+
+uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
+int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
+const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3]);
+static void RemoveTrailingSpaces(char* fat_filename_buffer);
+ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
+
+ROOT_ENTRY* GetDirEntry(char* filename);
+ROOT_ENTRY* Function0(ROOT_DIR* subroot, int num_entries, char* filename);
+const char* Function1(const uint8_t name[8], const uint8_t ext[3]);
+static void Function2(char* fat_filename_buffer);
+const char* Function3(const char* path);
+int Function4(ROOT_ENTRY* entry, void** data, uint32_t* size);
+int Function5(ROOT_ENTRY* entry, uint32_t* entry_size);
+static int Function6(int start_cluster);
+
 int ReadDiskImage(char* filename)
 {
     // Open disk image ------------------------------------------------------------------------
@@ -286,21 +317,18 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
    return (ROOT_DIR*)buffer;
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-/*Kevin*/
-//1.get the correct root_entry.
-//2.return file size from that entry.
-
 //need to define a DIRECTORY_MASK
 #define DIRECTORY_MASK 0X10
 
-//uses 32 bits (4 bytes)
 uint32_t GetFileSize(char* filename)
 {
     //call ROOT_ENTRY* entry GetRootEntry function
     ROOT_ENTRY* entry = GetRootEntry(filename);
+    return GetFileSizeFromEntry(entry);
+}
 
+uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
+{
     //error checking for file
     //if file does not exist, there will be no entry available
     if (entry == NULL)
@@ -315,7 +343,7 @@ uint32_t GetFileSize(char* filename)
     //Determines whether its a file or a directory
     if(entry-> file_attribute & DIRECTORY_MASK == DIRECTORY_MASK)
     {
-        return GetDirectorySize(filename);
+        return GetDirectorySizeFromEntry(entry);
     }
     else
     {
@@ -327,15 +355,17 @@ uint32_t GetFileSize(char* filename)
 /*Yunhu*/
 int GetDirectorySize(char* directory)
 {
-    //Get target root entry
     ROOT_ENTRY* entry = GetRootEntry(directory);
+    return GetDirectorySizeFromEntry(entry);
+}
 
-    //error checking
-    if (entry == NULL)
-    {
-        printf("Directory does not exist.");
-        return 0;
-    }
+int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
+{
+    int count = 0;
+    int cluster = entry->first_cluster;
+
+    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
+    FAT_TABLE_ENTRY* next = &base[cluster];
 
     int count = 0;
     int cluster = entry->first_cluster;
@@ -410,7 +440,6 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 
             //char* buffer = (char*)malloc(size);
             //memset(buffer, 0, size);
-
             //buffer = ReadFileContents(entry, buffer, size);
 
             int rc = Function4(entry, &data, &size);
@@ -459,6 +488,40 @@ ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
     }
     return NULL;
 }
+
+static void RemoveTrailingSpaces(char* fat_filename_buffer)
+{
+    assert(fat_filename_buffer != NULL);
+    int end = strlen(fat_filename_buffer);
+    assert(end <= 12);
+
+    // Substutute NULLs for an trailing spaces
+    int i = end - 1;
+    while(i >= 0 && fat_filename_buffer[i] == ' ')
+    {
+        fat_filename_buffer[i] = '\0';
+        i--;
+    }
+}
+
+const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
+{
+    static char full_filename[13] = {0};
+    memset(full_filename, 0, sizeof(full_filename));
+    strncat(full_filename, (char*)name, 8);
+    RemoveTrailingSpaces(full_filename);
+
+    if (ext[0] != ' ')
+    {
+        strcat(full_filename, ".");
+        strncat(full_filename, (char*)ext, 3);
+        RemoveTrailingSpaces(full_filename);
+    }
+    return full_filename;
+}
+
+
+
 /*Alex*/
 char* GetFileData(char* targetFile)
 {
@@ -483,7 +546,7 @@ char* GetFileData(char* targetFile)
 //Ali - ReadFileContents
 //
 //Searches through FAT to find pointers to the file's data and seeks to it to then reads all of the data into a buffer which gets returned.
-char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
+char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
 {
     // How many bytes are left
     int remaining = size;
@@ -502,10 +565,10 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
     long int cluster_offset = g_offsetToDataClusters + (512 * (clusterPointer - 2));
 
     //2. Follow up until reaching EOF
-    while (clusterPointer < 0xFFF0 && remaining > 0){
-        
-        //3. Seek and read correspond cluster in data region
+    while (clusterPointer < 0xFFF0 && remaining > 0)
+    {
 
+        //3. Seek and read correspond cluster in data region
         seek_rc = fseek(g_filePointer, cluster_offset, SEEK_SET);
 
         // Error Checking
@@ -539,59 +602,7 @@ char* ReadFileContents(ROOT_ENTRY* entry, char* buffer,int size)
         //4. Get next cluster from FAT
         clusterPointer = g_fatTable->Table[clusterPointer];
     }
+
     //5. Return the buffer
-    return buffer;    
-}
-
-
-
-ROOT_ENTRY* GetDirEntry(char* filename)
-{
-    assert(filename != NULL);
-
-    ROOT_DIR* root = g_rootDir;
-    int num_entries = g_fatBoot->fat_root_directory_entries;
-
-    ROOT_ENTRY* entry = NULL;
-    void* data;
-    uint32_t size;
-
-    // filename has a series of n tokens separated by slashes
-    // the very last of these tokens might be a filename or a directory
-    // all of the other tokens from 1 through n-1 must be Directories
-
-    const char* sep = Function3(filename);
-    char* token = strtok(filename, sep);
-    while(token != NULL)
-    {
-        entry = Function0(root, num_entries, token);
-        if (entry == NULL)
-        {
-            return NULL;
-        }
-
-        if ((entry->file_attribute & FILE_ATTRIBUTE_DIRECTORY) > 0)
-        {
-            int rc = Function4(entry, &data, &size);
-            if (rc != EXIT_SUCCESS)
-            {
-                printf("Error: Cannot read directory '%s'\n", token);
-                return NULL;
-            }
-            root = (ROOT_DIR*)data;
-            num_entries = size / sizeof(ROOT_ENTRY);
-        }
-        else
-        {
-            // if we get here, we've reached the final ROOT_ENTRY for this
-            // file and this is what we need to return
-            return entry;
-        }
-
-        token = strtok(NULL, sep);
-    }
-
-    // if we get here, we've exhausted all the directories that the user gave
-    // us and are ready to return the final ROOT_ENTRY*
-    return entry;
+    return buffer;
 }
