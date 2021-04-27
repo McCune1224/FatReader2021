@@ -47,7 +47,27 @@ void pwd()
 //Ali
 void cat(char* path)
 {
+    char* filename;
+    char* temp;
+    //Local Directory
+    if(path[0] != '\\')
+    {
+        filename = path;
+    }
+    //Located Elsewhere
+    else
+    {
+        for(int i = strlen(path)-1; path[i] != '\\'; i--)
+        {
+            temp+= path[i];
+        }
+        for(int i = strlen(temp)-1; i>0; i--)
+        {
+            filename+= temp[i];
+        }
+    }
 
+    
 }
 //ALex
 void cd(char* path)
