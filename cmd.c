@@ -45,21 +45,21 @@ void pwd()
 
 }
 //Ali
-void cat(char* path)
+void cat(char* file_path)
 {
     char* filename;
     char* temp;
     //Local Directory
-    if(path[0] != '\\')
+    if(file_path[0] != '\\')
     {
-        filename = path;
+        filename = file_path;
     }
     //Located Elsewhere
     else
     {
-        for(int i = strlen(path)-1; path[i] != '\\'; i--)
+        for(int i = strlen(file_path)-1; file_path[i] != '\\'; i--)
         {
-            temp+= path[i];
+            temp+= file_path[i];
         }
         for(int i = strlen(temp)-1; i>0; i--)
         {
@@ -67,8 +67,8 @@ void cat(char* path)
         }
     }
     char* buffer = GetFileData(filename);
-    int size;
-    ROOT_ENTRY* entry;
+    int size = sizeof(buffer);
+    ROOT_ENTRY* entry = GetRootEntry(filename);
     temp = ReadFileContents(entry, buffer, size);
     HexDump(temp, size);
     free(filename);
