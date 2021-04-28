@@ -66,7 +66,14 @@ void cat(char* path)
             filename+= temp[i];
         }
     }
-
+    char* buffer = GetFileData(filename);
+    int size;
+    ROOT_ENTRY* entry;
+    temp = ReadFileContents(entry, buffer, size);
+    HexDump(temp, size);
+    free(filename);
+    free(buffer);
+    free(temp);
     
 }
 //Alex
