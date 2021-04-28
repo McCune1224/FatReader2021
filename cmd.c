@@ -51,9 +51,9 @@ void cat(char* file_path)
     //Local Directory
     if(file_path[0] != '/')
     {
-        strcpy(filename, dirListBuffer);
-        strcat(filename, '/');
-        strcat(filename, file_path);
+        strncpy(filename, dirListBuffer, sizeof(dirListBuffer));
+        strncat(filename, '/', 1);
+        strncat(filename, file_path, strlen(file_path)-1);
     }
     //Located Elsewhere
     else
@@ -64,7 +64,7 @@ void cat(char* file_path)
     int size = GetFileSize(filename);
     char* buffer = GetFileData(filename);
 
-    HexDump(filename, size);
+    HexDump(buffer, size);
 
     free(filename);
     free(buffer);
