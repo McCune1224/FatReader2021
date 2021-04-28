@@ -113,7 +113,7 @@ uint32_t GetFileSize(char* filename);
 
 int GetDirectorySize(char* directory);
 
-ROOT_ENTRY* GetRootEntry(char* fullDirectory);
+ROOT_ENTRY* GetRootEntry(char* filename);
 
 char* GetFileData(char* targetFile);
 

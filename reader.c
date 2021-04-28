@@ -49,18 +49,7 @@ static uint32_t g_offsetToDataClusters;
 
 uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
 int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
-const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3]);
-static void RemoveTrailingSpaces(char* fat_filename_buffer);
 ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
-
-ROOT_ENTRY* GetDirEntry(char* filename);
-ROOT_ENTRY* Function0(ROOT_DIR* subroot, int num_entries, char* filename);
-const char* Function1(const uint8_t name[8], const uint8_t ext[3]);
-static void Function2(char* fat_filename_buffer);
-const char* Function3(const char* path);
-int Function4(ROOT_ENTRY* entry, void** data, uint32_t* size);
-int Function5(ROOT_ENTRY* entry, uint32_t* entry_size);
-static int Function6(int start_cluster);
 
 int ReadDiskImage(char* filename)
 {
@@ -127,7 +116,7 @@ int ReadDiskImage(char* filename)
         printf("Error: ReadFatTable Failed\n");
         return UNREADABLE;
     }
-    printf("data: %08x\n", *(unsigned int*)fat);
+    //printf("data: %08x\n", *(unsigned int*)fat);
 
 
     // Root Directory -------------------------------------------------------------------------
@@ -143,7 +132,7 @@ int ReadDiskImage(char* filename)
 
     g_offsetToDataClusters = offsetToRootDir + (boot->fat_root_directory_entries * sizeof(ROOT_ENTRY));
 
-    HexDump(root, 100);
+    //HexDump(root, 100);
 
     //fclose(fp);
     return 0;
@@ -360,12 +349,6 @@ int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
     FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;
     FAT_TABLE_ENTRY* next = &base[cluster];
 
-    int count = 0;
-    int cluster = entry->first_cluster;
-
-    FAT_TABLE_ENTRY* base = (FAT_TABLE_ENTRY*)g_fatTable;//store fat table
-    FAT_TABLE_ENTRY* next = &base[cluster];//store next cluster
-
     //loop entill EOF
     while (cluster < 0xFFF8)
     {
@@ -380,8 +363,6 @@ int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
 /*Luke & prof.Tallman*/
 ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 {
-    
-    
     //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
     //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
     //3.read ROOT_ENTRY to find first cluster of first directory entry
@@ -390,10 +371,10 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
     //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
     //7.repeat step 3-5. Until we get to the last one
     //8.return that ROOT_ENTRY
-    int entries = g_fatBoot->fat_root_directory_entries;
+    int entry_count = g_fatBoot->fat_root_directory_entries;
 
-    ROOT_DIR* dir = g_rootDir;
-
+    ROOT_DIR* dir_root = g_rootDir;
+    
     ROOT_ENTRY* entry = NULL;
 
     char str[strlen(fullDirectory)];
@@ -403,17 +384,16 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 
     //uint32_t size;
 
-    void* data;
-    uint32_t size;
+    char* data = NULL;
+    uint32_t size = 0;
 
     while(ptr != NULL)
 	{
-		printf("DIR: %s\n", ptr);
-        printf("%d\n", dir);
-        printf("%d\n", entries);
+		//printf("DIR: %s\n", ptr);
+        //printf("%p\n", (char*)dir_root);
+        //printf("%d\n", entry_count);
 
-        entry = FindMatchingEntryName(ptr, dir, entries);
-        //entry = Function0(dir, entries, ptr);
+        entry = FindMatchingEntryName(ptr, dir_root, entry_count);
         if (entry == NULL)
         {
             printf("Entry: NULL\n");
@@ -421,34 +401,33 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
         }
 
         // Print Entry
-        printf("ENTRY: %p\n", entry);
-        HexDump(entry, sizeof(ROOT_ENTRY));
+        //printf("ENTRY: %p\n", entry);
+        //HexDump(entry, sizeof(ROOT_ENTRY));
 
         if((entry->file_attribute & 0x10) > 0) // If is Directory
         {
-            //HexDump(entry, sizeof(ROOT_ENTRY));
-
-            //int size = GetDirectorySizeFromEntry(entry); // <--- Problem
-            //int rc = Function5(entry, &size);
-            //printf("%d\n", size);
-
-            //char* buffer = (char*)malloc(size);
-            //memset(buffer, 0, size);
-            //buffer = ReadFileContents(entry, buffer, size);
-
-            int rc = Function4(entry, &data, &size);
-
-            printf("%d\n", size);
-            HexDump(data, size);
+            // Clear out the last ROOT_ENTRY before we create a memory leak 
+            // by allocating a new buffer and losing the original pointer
+            if (data != NULL)
+            {
+                free(data);
+                data = NULL;
+            }
             
-            if (rc != EXIT_SUCCESS)
+            size = GetDirectorySizeFromEntry(entry);
+            data = malloc(size);
+            data = ReadFileContents(entry, data, size);           
+            if (data == NULL)
             {
                 printf("Error: Cannot read directory '%s'\n", ptr);
                 return NULL;
             }
+            
+            //printf("%d\n", size);
+            //HexDump(data, size);           
 
-            dir = (ROOT_DIR*)data;
-            entries = size / sizeof(ROOT_ENTRY);
+            dir_root = (ROOT_DIR*)data;
+            entry_count = size / sizeof(ROOT_ENTRY);
 
             ///------------------
         }
@@ -483,38 +462,6 @@ ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
     return NULL;
 }
 
-static void RemoveTrailingSpaces(char* fat_filename_buffer)
-{
-    assert(fat_filename_buffer != NULL);
-    int end = strlen(fat_filename_buffer);
-    assert(end <= 12);
-
-    // Substutute NULLs for an trailing spaces
-    int i = end - 1;
-    while(i >= 0 && fat_filename_buffer[i] == ' ')
-    {
-        fat_filename_buffer[i] = '\0';
-        i--;
-    }
-}
-
-const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
-{
-    static char full_filename[13] = {0};
-    memset(full_filename, 0, sizeof(full_filename));
-    strncat(full_filename, (char*)name, 8);
-    RemoveTrailingSpaces(full_filename);
-
-    if (ext[0] != ' ')
-    {
-        strcat(full_filename, ".");
-        strncat(full_filename, (char*)ext, 3);
-        RemoveTrailingSpaces(full_filename);
-    }
-    return full_filename;
-}
-
-
 
 /*Alex*/
 char* GetFileData(char* targetFile)
@@ -532,7 +479,6 @@ char* GetFileData(char* targetFile)
     //4.read the data into the buffer using ReadFileContents()
     buffer = ReadFileContents(entry, buffer, fileSize); 
     
-    HexDump(buffer, fileSize);
     //5.return the buffer
     return buffer;
 }

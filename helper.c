@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 #include "helper.h"
+
+static void RemoveTrailingSpaces(char* fat_filename_buffer);
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)       \
@@ -229,19 +232,39 @@ void HexDump(void *addr, int size)
     printf("  %s\n", temp);
 }
 
-//helper function to remove trailing spaces
-static void RemoveTrailingSpaces(char *fat_filename_buffer)
-{
-    int end = strlen(fat_filename_buffer);
 
-    // Substitute NULLs for any trailing spaces
+
+static void RemoveTrailingSpaces(char* fat_filename_buffer)
+{
+    assert(fat_filename_buffer != NULL);
+    int end = strlen(fat_filename_buffer);
+    assert(end <= 12);
+
+    // Substutute NULLs for an trailing spaces
     int i = end - 1;
-    while (i >= 0 && fat_filename_buffer[i] == ' ')
+    while(i >= 0 && fat_filename_buffer[i] == ' ')
     {
         fat_filename_buffer[i] = '\0';
         i--;
     }
 }
+
+const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
+{
+    static char full_filename[13] = {0};
+    memset(full_filename, 0, sizeof(full_filename));
+    strncat(full_filename, (char*)name, 8);
+    RemoveTrailingSpaces(full_filename);
+
+    if (ext[0] != ' ')
+    {
+        strcat(full_filename, ".");
+        strncat(full_filename, (char*)ext, 3);
+        RemoveTrailingSpaces(full_filename);
+    }
+    return full_filename;
+}
+
 
 // Alex
 // Fixes up the name of data in our Fat Table. Note that this is only designed for short file.
