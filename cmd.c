@@ -45,9 +45,32 @@ void pwd()
 
 }
 //Ali
-void cat(char* path)
+void cat(char* file_path)
 {
+    char* filename = malloc(256);
+    //Local Directory
+    if(file_path[0] != '/')
+    {   //The last paramater is not the size of the source.
 
+        strncpy(filename, dirListBuffer, 256);
+        strncat(filename, '/', 256-strlen(filename)-1);
+        strncat(filename, file_path, 256-strlen(filename)-1);
+    }
+    //Located Elsewhere
+    else
+    {
+        filename = file_path;
+    }
+    int size = GetFileSize(filename);
+    char* buffer = GetFileData(filename);
+
+    //Cat the file
+    HexDump(buffer, size);
+
+    //Maintenance
+    free(filename);
+    free(buffer);
+    
 }
 //Alex
 void cd(char* path)
