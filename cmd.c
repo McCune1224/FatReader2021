@@ -47,33 +47,27 @@ void pwd()
 //Ali
 void cat(char* file_path)
 {
-    char* filename;
-    char* temp;
+    char* filename = malloc(256);
     //Local Directory
-    if(file_path[0] != '\\')
+    if(file_path[0] != '/')
     {
-        filename = file_path;
+        strcpy(filename, dirListBuffer);
+        strcat(filename, '/');
+        strcat(filename, file_path);
     }
     //Located Elsewhere
     else
     {
-        for(int i = strlen(file_path)-1; file_path[i] != '\\'; i--)
-        {
-            temp+= file_path[i];
-        }
-        for(int i = strlen(temp)-1; i>0; i--)
-        {
-            filename+= temp[i];
-        }
+        filename = file_path;
     }
+    
+    int size = GetFileSize(filename);
     char* buffer = GetFileData(filename);
-    int size = sizeof(buffer);
-    ROOT_ENTRY* entry = GetRootEntry(filename);
-    temp = ReadFileContents(entry, buffer, size);
-    HexDump(temp, size);
+
+    HexDump(filename, size);
+
     free(filename);
     free(buffer);
-    free(temp);
     
 }
 //Alex
