@@ -80,5 +80,46 @@ void cd(char* path)
 //Yunhu
 void shellLoop()
 {
+    while (true)
+    {
+        char cmd[60];
+        const char s[2] = " ";
+        char* token;
 
+        if (fgets(cmd, 60, stdin) != NULL) // read command
+        {
+            //lowercase the command
+            for (int i = 0; cmd[i]; i++)
+            {
+                cmd[i] = tolower(cmd[i]);
+            }
+
+            token = strtok(test, s);// split by space and get first token
+            switch (token)
+            {
+            case "ls":
+                ls();
+                break;
+
+            case "pwd":
+                pwd();
+                break;
+
+            case "cat":
+                token = strtok(NULL, s);// get second token
+                cat(token);
+                break;
+
+            case "cd":
+                token = strtok(NULL, s);// get second token
+                cd(token);
+                break;
+            }
+        }
+
+        else
+        {
+            printf("fgets failed.");
+        }
+    }
 }
