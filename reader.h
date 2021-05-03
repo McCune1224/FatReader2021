@@ -2,7 +2,7 @@
 #define READER_HEADER
 #include <stdint.h>
 
-#define UNREADABLE 1 
+#define UNREADABLE 1
 
 #define FILE_ATTRIBUTE_READONLY 0x01
 #define FILE_ATTRIBUTE_HIDDEN 0x02
@@ -96,6 +96,8 @@ typedef struct ROOT_DIR
 	ROOT_ENTRY data[0];
 } __attribute__((packed)) ROOT_DIR;
 
+ROOT_DIR* g_rootDir;
+
 /*
  * Reads the disk image containing a FAT16 partition
  * Forms data into four structs: MBR, FAT_BOOT, FAT_TABLE, ROOT_DIR
@@ -125,6 +127,8 @@ uint32_t GetFileSize(char* filename);
 uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
 
 int GetDirectorySize(char* directory);
+
+int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
 
 ROOT_ENTRY* GetRootEntry(char* filename);
 
