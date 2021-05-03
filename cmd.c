@@ -155,9 +155,52 @@ void cat(char* file_path)
 
 }
 //Alex
-void cd(char* path)
+void cd(char *path)
 {
+    //Allocate a char* for the path the user might give (at most 256 chars)
+    char buffer[256];
+    //Go up Directory
+    if (path == "..")
+    {
+        printf("Trying %s", path);
+        printf("PRE-Updated full dir: %s\n",dirListBuffer);
+        //Move path into buffer so strtok() can be used
+        strcpy(buffer, path);
 
+        //Variables for strtok(), which allows parse based off a string/char
+        char *parsedDir;
+        parsedDir = strtok(buffer, "/");
+        //No "/" detected, single directory move
+        if (parsedDir == NULL)
+        {
+            printf("At root, cannot go up a directory...\n");
+        }
+        //"/" detected, need to move multiple directories
+        while (parsedDir)
+        {
+            //move until we get the dir after the final "/"
+            parsedDir = strtok(NULL, "/");
+        }
+
+        //get the starting point from the final "/" in the dirListBuffer
+        int i = strlen(dirListBuffer) - strlen(parsedDir) + 1;
+        //Replace the buffer starting from the final "/" to be null padding
+        while (i < strlen(dirListBuffer)){
+            dirListBuffer[i] = '\0';
+        }
+        printf("Updated full dir: %s\n",dirListBuffer);
+    }
+    //Going down a certian amount of directories
+    else{
+        printf("Trying %s\n", path);
+        //check to make sure the directory path exists before appending to buffer by calling GetDirSize
+        if (GetDirectorySize(strcpy(dirListBuffer,path))){
+        strcpy(dirListBuffer, path);
+        }
+        else{
+            printf("'%s' is not a valid directory path\n", path);
+        }
+    }
 }
 //Yunhu
 void shellLoop()
