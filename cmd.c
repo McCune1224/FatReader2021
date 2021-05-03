@@ -73,9 +73,49 @@ void cat(char* file_path)
     
 }
 //Alex
-void cd(char* path)
+void cd(char *path)
 {
+    //Allocate a char* for the path the user might give (at most 256 chars)
+    char buffer[256];
 
+    //Move path into buffer so strtok() can be used
+    strcpy(buffer, path);
+
+    //Variables for strtok(), which allows parse based off a string/char
+    char* parsedDir;
+    parsedDir = strtok(buffer, "/");
+
+    //No "/" detected, single directory move
+    if (parsedDir == NULL)
+    {
+        MoveDir(buffer);
+    }
+    //"/" detected, need to move multiple directories
+    while (parsedDir)
+    {
+        MoveDir(parsedDir);
+        //move to next character
+        parsedDir = strtok(NULL, "/");
+    }
+}
+
+//helper function to do the actual changing of directories.
+void MoveDir(char* path)
+{
+    //EX: "2-DIR-01"
+
+    //Go up a directory
+    if (path == "..")
+    {
+        printf("Trying '%s'\n", path);
+
+    }
+    //Go down to specified path
+    else
+    {
+        printf("Trying '%s'\n", path);
+
+    }
 }
 //Yunhu
 void shellLoop()
