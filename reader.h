@@ -2,7 +2,18 @@
 #define READER_HEADER
 #include <stdint.h>
 
-#define UNREADABLE 1 
+#define UNREADABLE 1
+
+#define FILE_ATTRIBUTE_READONLY 0x01
+#define FILE_ATTRIBUTE_HIDDEN 0x02
+#define FILE_ATTRIBUTE_SYSTEM 0x04
+#define FILE_ATTRIBUTE_VOLUME 0x08
+#define FILE_ATTRIBUTE_LFN \
+    (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
+     FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
+#define FILE_ATTRIBUTE_DIRECTORY 0x10
+#define FILE_ATTRIBUTE_ARCHIVE 0x20
+
 
 
 
@@ -85,6 +96,8 @@ typedef struct ROOT_DIR
 	ROOT_ENTRY data[0];
 } __attribute__((packed)) ROOT_DIR;
 
+ROOT_DIR* g_rootDir;
+
 /*
  * Reads the disk image containing a FAT16 partition
  * Forms data into four structs: MBR, FAT_BOOT, FAT_TABLE, ROOT_DIR
@@ -111,12 +124,21 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
 uint32_t GetFileSize(char* filename);
 
+uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
+
 int GetDirectorySize(char* directory);
+
+int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
 
 ROOT_ENTRY* GetRootEntry(char* filename);
 
 char* GetFileData(char* targetFile);
 
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size);
+
+ROOT_DIR* g_rootDir;
+
+
+
 
 #endif
