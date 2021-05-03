@@ -124,21 +124,26 @@ void pwd()
 //Ali
 void cat(char* file_path)
 {
+    printf("%s\n", file_path);
     char* filename = malloc(256);
     //Local Directory
     if(file_path[0] != '/')
     {   //The last paramater is not the size of the source.
 
         strncpy(filename, dirListBuffer, 256);
-        strncat(filename, '/', 256-strlen(filename)-1);
+        strncat(filename, "/", 256-strlen(filename)-1);
         strncat(filename, file_path, 256-strlen(filename)-1);
     }
     //Located Elsewhere
     else
     {
-        filename = file_path;
+        strncpy(filename, file_path, 256);
     }
     int size = GetFileSize(filename);
+    if(size == 0)
+    {
+        return; 
+    }
     char* buffer = GetFileData(filename);
 
     //Cat the file
@@ -157,6 +162,7 @@ void cd(char* path)
 //Yunhu
 void shellLoop()
 {
+    printf("slow testing session\n");
     while (1)
     {
         char cmd[60];
@@ -164,32 +170,39 @@ void shellLoop()
         char* token;
 
         if (fgets(cmd, 60, stdin) != NULL) // read command
-        {
+        {    
+            //printf("%s\n" , cmd);
             //lowercase the command
             for (int i = 0; cmd[i]; i++)
             {
-                cmd[i] = tolower(cmd[i]);
+                //cmd[i] = toupper(cmd[i]);
             }
 
 
-            token = strtok(test, s);// split by space and get first token
-            if (strcmp(token, "ls" == 0))
+            token = strtok(cmd, s);// split by space and get first token
+            int index = strcspn(token, "\r");
+            token[index] = '\0';
+            printf("%s\n", token);
+            if (strcmp(token, "ls") == 0)
             {
                 ls();
             }
 
-            else if (strcmp(token, "pwd" == 0))
+            else if (strcmp(token, "pwd") == 0)
             {
                 pwd();
             }
 
-            else if (strcmp(token, "cat" == 0))
+            else if (strcmp(token, "cat") == 0)
             {
                 token = strtok(NULL, s);
+                index = strcspn(token, "\r\n");
+                token[index] = '\0';
+                printf("'%s'\n", token);
                 cat(token);
             }
 
-            else if (strcmp(token, "cd" == 0))
+            else if (strcmp(token, "cd") == 0)
             {
                 token = strtok(NULL, s);
                 cd(token);
@@ -198,9 +211,10 @@ void shellLoop()
 
             else
             {
-                printf("error: unrecognized command")
+                printf("error: unrecognized command");
             }
-
+          
+            
         }
 
         else

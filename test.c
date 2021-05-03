@@ -27,7 +27,11 @@ int main(int argc, char* argv[])
     //strcpy(fullDirectory, "/W04/W04L01/W04L02/W04F03.TXT");
     strcpy(fullDirectory, "/2-DIR-01/2-01-0~1.txt");
 
-    ls();
+    //ls();
+    printf("testing\n");
+    cat(fullDirectory);
+    shellLoop();
+
     /*
     // Test case for GetRootEntry
     ROOT_ENTRY* entry = GetRootEntry(fullDirectory);    
