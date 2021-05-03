@@ -6,7 +6,7 @@
 #include "reader.h"
 #include "helper.h"
 
-
+/*
 #define FILE_ATTRIBUTE_READONLY 0x01
 #define FILE_ATTRIBUTE_HIDDEN 0x02
 #define FILE_ATTRIBUTE_SYSTEM 0x04
@@ -16,13 +16,16 @@
      FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
 #define FILE_ATTRIBUTE_DIRECTORY 0x10
 #define FILE_ATTRIBUTE_ARCHIVE 0x20
+*/
+
 
 
 static FILE* g_filePointer;
 static FAT_BOOT* g_fatBoot;
 static FAT_TABLE* g_fatTable;
-static ROOT_DIR* g_rootDir;
+//static ROOT_DIR* g_rootDir;
 static uint32_t g_offsetToDataClusters;
+
 
 
 ROOT_ENTRY* GetDirEntry(char* filename);
@@ -31,21 +34,7 @@ ROOT_ENTRY* GetDirEntry(char* filename);
 **                              ReadDiskImage                                **
 ******************************************************************************/
 
-static FILE* g_filePointer;
-static FAT_BOOT* g_fatBoot;
-static FAT_TABLE* g_fatTable;
-static ROOT_DIR* g_rootDir;
-static uint32_t g_offsetToDataClusters;
 
-#define FILE_ATTRIBUTE_READONLY 0x01
-#define FILE_ATTRIBUTE_HIDDEN 0x02
-#define FILE_ATTRIBUTE_SYSTEM 0x04
-#define FILE_ATTRIBUTE_VOLUME 0x08
-#define FILE_ATTRIBUTE_LFN \
-    (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
-     FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
-#define FILE_ATTRIBUTE_DIRECTORY 0x10
-#define FILE_ATTRIBUTE_ARCHIVE 0x20
 
 uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
 int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
@@ -323,7 +312,7 @@ uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
 
     //DIRECTORY MASK 0X10
     //Determines whether its a file or a directory
-    if((entry-> file_attribute) & (DIRECTORY_MASK == DIRECTORY_MASK))
+    if((entry-> file_attribute & DIRECTORY_MASK) == DIRECTORY_MASK)
     {
         return GetDirectorySizeFromEntry(entry);
     }
