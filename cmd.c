@@ -157,7 +157,7 @@ void cd(char* path)
 //Yunhu
 void shellLoop()
 {
-    while (true)
+    while (1)
     {
         char cmd[60];
         const char s[2] = " ";
@@ -171,27 +171,36 @@ void shellLoop()
                 cmd[i] = tolower(cmd[i]);
             }
 
-            /*token = strtok(test, s);// split by space and get first token
-            switch (token)
+
+            token = strtok(test, s);// split by space and get first token
+            if (strcmp(token, "ls" == 0))
             {
-            case "ls":
                 ls();
-                break;
+            }
 
-            case "pwd":
+            else if (strcmp(token, "pwd" == 0))
+            {
                 pwd();
-                break;
+            }
 
-            case "cat":
-                token = strtok(NULL, s);// get second token
+            else if (strcmp(token, "cat" == 0))
+            {
+                token = strtok(NULL, s);
                 cat(token);
-                break;
+            }
 
-            case "cd":
-                token = strtok(NULL, s);// get second token
+            else if (strcmp(token, "cd" == 0))
+            {
+                token = strtok(NULL, s);
                 cd(token);
-                break;
-            }*/
+
+            }
+
+            else
+            {
+                printf("error: unrecognized command")
+            }
+
         }
 
         else
