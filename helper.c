@@ -5,8 +5,6 @@
 #include <assert.h>
 #include "helper.h"
 
-static void RemoveTrailingSpaces(char* fat_filename_buffer);
-
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)       \
     (byte & 0x80 ? '1' : '0'),     \
@@ -234,11 +232,10 @@ void HexDump(void *addr, int size)
 
 
 
-static void RemoveTrailingSpaces(char* fat_filename_buffer)
+void RemoveTrailingSpaces(char* fat_filename_buffer)
 {
     assert(fat_filename_buffer != NULL);
     int end = strlen(fat_filename_buffer);
-    assert(end <= 12);
 
     // Substutute NULLs for an trailing spaces
     int i = end - 1;

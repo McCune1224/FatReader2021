@@ -8,7 +8,6 @@
 
 
 static FILE* g_filePointer;
-static FAT_BOOT* g_fatBoot;
 static FAT_TABLE* g_fatTable;
 static uint32_t g_offsetToDataClusters;
 
@@ -294,13 +293,13 @@ uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
     //Determines whether its a file or a directory
     if((entry->file_attribute & DIRECTORY_MASK) == DIRECTORY_MASK)
     {
-        printf("Diretoctory\n");
+        //printf("Diretoctory\n");
         return GetDirectorySizeFromEntry(entry);
     }
     else
     {
         //returns entry file size
-        printf("File\n");
+        //printf("File\n");
         return entry->file_size;
     }
 }

@@ -97,6 +97,7 @@ typedef struct ROOT_DIR
 } __attribute__((packed)) ROOT_DIR;
 
 ROOT_DIR* g_rootDir;
+FAT_BOOT* g_fatBoot;
 
 /*
  * Reads the disk image containing a FAT16 partition
