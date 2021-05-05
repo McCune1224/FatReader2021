@@ -159,6 +159,7 @@ void cd(char *path)
 {
     //Allocate a char* for the path the user might give (at most 256 chars)
     char buffer[256];
+
     //Go up Directory
     if (path == "..")
     {
