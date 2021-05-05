@@ -24,7 +24,7 @@ char *FileAttributes(uint8_t byte)
 {
     char *bitchar = malloc(8 * sizeof(char));
     sprintf(bitchar, BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(byte));
-    printf(bitchar);
+    printf("%s", bitchar);
 
     char *result = malloc(80);
     strcat(result, "|");
