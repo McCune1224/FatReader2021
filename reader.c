@@ -10,15 +10,11 @@
 static FILE* g_filePointer;
 static FAT_TABLE* g_fatTable;
 static uint32_t g_offsetToDataClusters;
-
+ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
 
 /******************************************************************************
 **                              ReadDiskImage                                **
 ******************************************************************************/
-
-
-ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* root_dir, int entries);
-
 int ReadDiskImage(char* filename)
 {
     // Open disk image ------------------------------------------------------------------------
@@ -71,12 +67,6 @@ int ReadDiskImage(char* filename)
     int sector_size = boot->bytes_per_sector;
     int offsetToFatTable = offsetToBootSector + (boot->reserved_logical_sectors * sector_size);
 
-    // Print debug data (TEMP, TO BE REMOVED IN FUTURE)
-    // printf("%d\n", count);
-    // printf("%d\n", fat_sectors);
-    // printf("%d\n", sector_size);
-    // printf("%d\n", offsetToFatTable);
-
     FAT_TABLE* fat = ReadFatTable(fp, offsetToFatTable, count, fat_sectors, sector_size);
     g_fatTable = fat;
     if(fat == NULL)
@@ -84,8 +74,6 @@ int ReadDiskImage(char* filename)
         printf("Error: ReadFatTable Failed\n");
         return UNREADABLE;
     }
-    //printf("data: %08x\n", *(unsigned int*)fat);
-
 
     // Root Directory -------------------------------------------------------------------------
     int offsetToRootDir = offsetToFatTable + (count * fat_sectors * sector_size);
@@ -100,45 +88,31 @@ int ReadDiskImage(char* filename)
 
     g_offsetToDataClusters = offsetToRootDir + (boot->fat_root_directory_entries * sizeof(ROOT_ENTRY));
 
-    //HexDump(root, 100);
-
-    //fclose(fp);
     return 0;
 }
 
 /******************************************************************************
 **                           ReadMasterBootRecord                            **
 ******************************************************************************/
-
-// Kevin- MBR
-// seeks to offset of fp(our pointer)
-// offset of MBR is 0
-// Calculates size of buffer
-// If "fread" fails, MBR won't read contents of file or it would read some contents, but not all that are required
 MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
-    if (seek_rc != 0) //if fseek equals 0, it is then successful. If it returns a nonzero, it has failed
+    //If fseek equals 0, it is then successful.
+    if (seek_rc != 0) 
     {
         printf("fseek failed, did not reach correct location\n");
         return NULL;
     }
 
     char* buffer = (char*)malloc(sizeof(MBR));
-    if (buffer == NULL) //when buffer equals null, it will return a null byte which indicates lack of memory
+    if (buffer == NULL) 
     {
         printf("Error, not enough memory\n");
         return NULL;
     }
 
     int total_count = fread(buffer, 1, sizeof(MBR), fp);
-    //HexDump(buffer, total_count);
-    //printf("----------------------------\n");
-    //int total_count2 = fread(buffer, 1, sizeof(MBR), fp);
-    //HexDump(buffer, total_count2);
-    //printf("%d\n", total_count2);
-
-    if (total_count < sizeof(MBR)) //if the total count is less than the size of MBR, it wont be able to read the contents of the file
+    if (total_count < sizeof(MBR)) 
     {
         printf("The contents of the file are not able to be read\n");
         return NULL;
@@ -150,42 +124,39 @@ MBR* ReadMasterBootRecord(FILE* fp, long int offset)
 /******************************************************************************
 **                             ReadFatBootSector                             **
 ******************************************************************************/
-//Read in the file's pointer and offset value based off lba_offset
+
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset)
 {
-    //try to read fp
+    //Try to read fp
     int seek_rc = fseek(fp, offset, SEEK_SET);
     if (seek_rc != 0)
     {
         printf("Fat Boot Sector Failed to read");
         return NULL;
     }
-    //allocate buffer for the size of FAT_BOOT struct as char*
+
+    //Allocate buffer for the size of FAT_BOOT struct as char*
     char* buffer = (char*)malloc(sizeof(FAT_BOOT));
     if (buffer == NULL)
     {
         printf("Unable to allocate memory for struct FAT_BOOT");
         return NULL;
     }
+
     int read_rc = fread(buffer, 1, sizeof(FAT_BOOT), fp);
     if (read_rc == 0)
     {
         printf("Unable to fread buffer");
         return NULL;
     }
-    //return buffer wrapped ontop of FAT_BOOT struct
+
+    // Return buffer wrapped ontop of FAT_BOOT struct
     return (FAT_BOOT*)buffer;
 }
 
 /******************************************************************************
 **                               ReadFatTable                                **
 ******************************************************************************/
-
-//Ali - ReadFatTable
-//
-//Seeks to specified offset of given fat file.
-//Then calculates the size of needed buffer to read from the file from the previously stated offset and returns a pointer to the read buffer.
-//Error checks a long the way.
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size)
 {
     int seek_rc = fseek(fp, offset, SEEK_SET);
@@ -228,7 +199,6 @@ FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, i
 /******************************************************************************
 **                           ReadFatRootDirectory                            **
 ******************************************************************************/
-
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
 {
    int size = count * sizeof(ROOT_ENTRY);
@@ -267,8 +237,9 @@ ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count)
    return (ROOT_DIR*)buffer;
 }
 
-//need to define a DIRECTORY_MASK
-#define DIRECTORY_MASK 0X10
+/******************************************************************************
+**                                GetFileSize                                **
+******************************************************************************/
 
 uint32_t GetFileSize(char* filename)
 {
@@ -277,39 +248,45 @@ uint32_t GetFileSize(char* filename)
     return GetFileSizeFromEntry(entry);
 }
 
+/******************************************************************************
+**                            GetFileSizeFromEntry                           **
+******************************************************************************/
+
 uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
 {
-    //error checking for file
-    //if file does not exist, there will be no entry available
+    //If file does not exist, there will be no entry available
     if (entry == NULL)
     {
         printf("File does not exist, root_entry not available\n");
 
-        // temporary error code for entry
         return 0;
     }
 
-    //DIRECTORY MASK 0X10
     //Determines whether its a file or a directory
     if((entry->file_attribute & DIRECTORY_MASK) == DIRECTORY_MASK)
     {
-        //printf("Diretoctory\n");
         return GetDirectorySizeFromEntry(entry);
     }
     else
     {
         //returns entry file size
-        //printf("File\n");
         return entry->file_size;
     }
 }
 
-/*Yunhu*/
+/******************************************************************************
+**                              GetDirectorySize                             **
+******************************************************************************/
+
 int GetDirectorySize(char* directory)
 {
     ROOT_ENTRY* entry = GetRootEntry(directory);
     return GetDirectorySizeFromEntry(entry);
 }
+
+/******************************************************************************
+**                          GetDirectorySizeFromEntry                        **
+******************************************************************************/
 
 int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
 {
@@ -330,17 +307,20 @@ int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
     return count * 512;
 }
 
-/*Luke & prof.Tallman*/
+/******************************************************************************
+**                                 GetRootEntry                              **
+******************************************************************************/
+
 ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 {
-    //1.parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
-    //2.find match to the first directory entry in ROOT_DIR. e.g. 'user'
-    //3.read ROOT_ENTRY to find first cluster of first directory entry
-    //4.follow up until reaching EOF
-    //5.read correspond cluster in data region
-    //6.find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
-    //7.repeat step 3-5. Until we get to the last one
-    //8.return that ROOT_ENTRY
+    //1. Parse the full directory. e.g. /user/Yunhu/filename.txt  ==>  'user' 'Yunhu' 'filename.txt'
+    //2. Find match to the first directory entry in ROOT_DIR. e.g. 'user'
+    //3. Read ROOT_ENTRY to find first cluster of first directory entry
+    //4. Follow up until reaching EOF
+    //5. Read correspond cluster in data region
+    //6. Find match to the second directory entry in ROOT_DIR. e.g. 'Yunhu'
+    //7. Repeat step 3-5. Until we get to the last one
+    //8. Return that ROOT_ENTRY
     int entry_count = g_fatBoot->fat_root_directory_entries;
 
     ROOT_DIR* dir_root = g_rootDir;
@@ -359,20 +339,12 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 
     while(ptr != NULL)
 	{
-		//printf("DIR: %s\n", ptr);
-        //printf("%p\n", (char*)dir_root);
-        //printf("%d\n", entry_count);
-
         entry = FindMatchingEntryName(ptr, dir_root, entry_count);
         if (entry == NULL)
         {
             printf("Entry: NULL\n");
             return NULL;
         }
-
-        // Print Entry
-        //printf("ENTRY: %p\n", entry);
-        //HexDump(entry, sizeof(ROOT_ENTRY));
 
         if((entry->file_attribute & 0x10) > 0) // If is Directory
         {
@@ -393,13 +365,10 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
                 return NULL;
             }
 
-            //printf("%d\n", size);
-            //HexDump(data, size);
-
             dir_root = (ROOT_DIR*)data;
             entry_count = size / sizeof(ROOT_ENTRY);
 
-            ///------------------
+            //------------------
         }
         else
         {
@@ -410,6 +379,10 @@ ROOT_ENTRY* GetRootEntry(char* fullDirectory)
 	}
     return entry; // Return Directory
 }
+
+/******************************************************************************
+**                            FindMatchingEntryName                          **
+******************************************************************************/
 
 ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
 {
@@ -432,30 +405,33 @@ ROOT_ENTRY* FindMatchingEntryName(char* filename, ROOT_DIR* dir, int entries)
     return NULL;
 }
 
+/******************************************************************************
+**                                 GetFileData                               **
+******************************************************************************/
 
-/*Alex*/
 char* GetFileData(char* targetFile)
 {
-    //1.get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
+    //1. Get the correct root_entry. ROOT_ENTRY* entry = GetRootEntry(targetFile);
     ROOT_ENTRY* entry = GetRootEntry(targetFile);
     if (entry == NULL)
     {
         return NULL;
     }
-    //2.get file size or directory size using GetFileSize()/GetDirectorySize()
+    //2. Get file size or directory size using GetFileSize()/GetDirectorySize()
     int fileSize = GetFileSize(targetFile);
-    //3.malloc the buffer with file size/directory size
+    //3. Malloc the buffer with file size/directory size
     char* buffer = (char*)malloc(fileSize);
-    //4.read the data into the buffer using ReadFileContents()
+    //4. Read the data into the buffer using ReadFileContents()
     buffer = ReadFileContents(entry, buffer, fileSize);
 
-    //5.return the buffer
+    //5. Return the buffer
     return buffer;
 }
 
-//Ali - ReadFileContents
-//
-//Searches through FAT to find pointers to the file's data and seeks to it to then reads all of the data into a buffer which gets returned.
+/******************************************************************************
+**                               ReadFileContents                            **
+******************************************************************************/
+
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
 {
     // How many bytes are left

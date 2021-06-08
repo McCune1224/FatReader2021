@@ -89,7 +89,7 @@ Would Need To Become:
 File.txt\0\0\0\0\0jA...Lma)!M>Am1...
 ```
 
-# Reader Functions 
+# Reader Functions (Stage 1)
 
 ```c
 [x] Kevin- MBR* ReadMsterBootRecord(FILE* fp, long int offset)
@@ -128,6 +128,50 @@ The purpose of the root directory is to find the main directory of a certain fil
 
 This function will read in the disk file. 
 
+```
+
+# Reader Functions (Stage 2)
+
+```c
+[x] Kevin- uint32_t GetFileSize(char* filename)
+
+Runs GetFileSizeFromEntry on an entry.
+```
+
+```c
+[x] Kevin- uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry)
+
+Gets the size of the entry. Entries can also be directories.
+```
+
+```c
+[x] Yunhu- int GetDirectorySize(char* directory)
+
+Runs GetDirectorySizeFromEntry on an entry.
+```
+
+```c
+[x] Yunhu- int GetDirectorySizeFromEntry(ROOT_ENTRY* entry)
+
+Counts all clusters in entry and returns the size of the entry.
+```
+
+```c
+[x] Alex- char* GetFileData(char* targetFile)
+
+Runs GetRootEntry, then GetFileSize, then ReadFileContents and reads all of that data about the target file into buffer.
+```
+
+```c
+[x] Ali - char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size)
+
+Searches through FAT to find pointers to the file's data and seeks to it to then reads all of the data into a buffer which gets returned.
+```
+
+```c
+[x] LUKE & Prof. TALLMAN - ROOT_ENTRY* GetRootEntry(char* fullDirectory)
+
+Finds the first cluster of the Root Entry and reads it to find the next cluster until the final cluster is read and the Root Entry gets returned.
 ```
 
 # FAT Reader Structures

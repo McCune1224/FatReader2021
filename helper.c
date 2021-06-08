@@ -16,9 +16,11 @@
         (byte & 0x02 ? '1' : '0'), \
         (byte & 0x01 ? '1' : '0')
 
-// Luke
-// Turns input parameter of "1 byte" into a more human friendly readable string
-char *FileAttributes(uint8_t byte)
+/******************************************************************************
+**                                FileAttributes                             **
+******************************************************************************/
+
+char* FileAttributes(uint8_t byte)
 {
     char *bitchar = malloc(8 * sizeof(char));
     sprintf(bitchar, BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(byte));
@@ -69,9 +71,11 @@ char *FileAttributes(uint8_t byte)
     free(bitchar);
 }
 
-// Yunhu
-// Turns input parameter "int bytes" into a more human friendly readable string.
-char *AsHumanSize(uint64_t bytes)
+/******************************************************************************
+**                                 AsHumanSize                               **
+******************************************************************************/
+
+char* AsHumanSize(uint64_t bytes)
 {
     static char str[20] = "";
     char *readable_string;
@@ -101,9 +105,11 @@ char *AsHumanSize(uint64_t bytes)
     return readable_string;
 }
 
-//// Yunhu
-//// Read input parameter of 1 byte and returns the media type. Examples: HDD, Floppy, Disc, etc.
-char *MediaType(uint8_t byte)
+/******************************************************************************
+**                                  MediaType                                **
+******************************************************************************/
+
+char* MediaType(uint8_t byte)
 {
     switch (byte)
     {
@@ -147,9 +153,11 @@ char *MediaType(uint8_t byte)
     return NULL;
 }
 
-// Kevin
-// Reads input parameter of 1 byte and responds with telling us the File System. For example, reading the byte will tell us if the file system is FAT16, FAT32, NTFS, etc.
-char *PartitionTypeName(uint8_t PartitionType)
+/******************************************************************************
+**                               PartitionTypeName                           **
+******************************************************************************/
+
+char* PartitionTypeName(uint8_t PartitionType)
 { //binary to hex?
     //printf("Read in the byte and decide PartitionType");
     switch (PartitionType)
@@ -177,8 +185,10 @@ char *PartitionTypeName(uint8_t PartitionType)
     }
 }
 
-// Ali
-// Reads data at memory address (void*) till the end of given size, then dumps the hex values. Here is an example output:
+/******************************************************************************
+**                                    HexDump                                **
+******************************************************************************/
+
 void HexDump(void *addr, int size)
 {
     int i;
@@ -230,7 +240,9 @@ void HexDump(void *addr, int size)
     printf("  %s\n", temp);
 }
 
-
+/******************************************************************************
+**                             RemoveTrailingSpaces                          **
+******************************************************************************/
 
 void RemoveTrailingSpaces(char* fat_filename_buffer)
 {
@@ -245,6 +257,10 @@ void RemoveTrailingSpaces(char* fat_filename_buffer)
         i--;
     }
 }
+
+/******************************************************************************
+**                             EightDotThreeString                           **
+******************************************************************************/
 
 const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
 {
@@ -262,11 +278,11 @@ const char* EightDotThreeString(const uint8_t name[8], const uint8_t ext[3])
     return full_filename;
 }
 
+/******************************************************************************
+**                                 FixShortFile                              **
+******************************************************************************/
 
-// Alex
-// Fixes up the name of data in our Fat Table. Note that this is only designed for short file.
-// Short files can only contain a file name with a max size of 8, and a extension name with a max size of 3.
-char *FixShortFile(void *rawFilename)
+char* FixShortFile(void *rawFilename)
 {
     //make a char pointer based off void pointer we are given
     char *pRawFileName = rawFilename;

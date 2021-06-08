@@ -13,7 +13,7 @@
      FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_VOLUME)
 #define FILE_ATTRIBUTE_DIRECTORY 0x10
 #define FILE_ATTRIBUTE_ARCHIVE 0x20
-
+#define DIRECTORY_MASK 0X10
 
 
 
@@ -99,7 +99,7 @@ typedef struct ROOT_DIR
 ROOT_DIR* g_rootDir;
 FAT_BOOT* g_fatBoot;
 
-/*
+/* LUKE - ReadDiskImage
  * Reads the disk image containing a FAT16 partition
  * Forms data into four structs: MBR, FAT_BOOT, FAT_TABLE, ROOT_DIR
  *
@@ -113,33 +113,162 @@ FAT_BOOT* g_fatBoot;
  */
 int ReadDiskImage(char* filename);
 
+/* KEVIN - ReadMasterBootRecord
+ * Reads into the Master Boot Record and returns a buffer of the data.
+ *
+ * -=| Params |=-
+ *   fp: File pointer
+ * 	 offset: Master Boot Record offset which is usually 0.
+ *
+ * -=| Returns |=-
+ *   type:    MBR*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
 MBR* ReadMasterBootRecord(FILE* fp, long int offset);
 
+/* ALEX - ReadFatBootSector
+ * Reads into the Fat Boot Sector and returns a buffer of the data.
+ *
+ * -=| Params |=-
+ *   fp: File pointer
+ * 	 offset: FAT Boot Sector offset which is based off of LBA_OFFSET
+ *
+ * -=| Returns |=-
+ *   type:    FAT_BOOT*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
 FAT_BOOT* ReadFatBootSector(FILE* fp, long int offset);
 
+/* ALI - ReadFatTable
+ * Reads into the Fat Table and returns a buffer of the data.
+ *
+ * -=| Params |=-
+ *   fp: File pointer
+ * 	 offset: FAT Table offset
+ * 	 count: Number of FAT sectors
+ * 	 fat_sectors: The FAT sectors
+ * 	 sector_size: Size of one FAT sector
+ *
+ * -=| Returns |=-
+ *   type:    FAT_TABLE*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
 FAT_TABLE* ReadFatTable(FILE* fp, long int offset, int count, int fat_sectors, int sector_size);
 
+/* Yunhu - ReadFatRootDirectory
+ * Reads into a FAT Root Directory and returns a buffer of the data.
+ *
+ * -=| Params |=-
+ *   fp: File pointer
+ * 	 offset: FAT Root Directory offset
+ * 	 count: Number of FAT Root Directories
+ *
+ * -=| Returns |=-
+ *   type:    ROOT_DIR*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
 ROOT_DIR* ReadFatRootDirectory(FILE* fp, long int offset, int count);
 
-//stage 2
+/******************************************************************************
+**                             STAGE 1 Complete                              **
+******************************************************************************/
 
+/* KEVIN - GetFileSize
+ * Runs GetFileSizeFromEntry on an entry.
+ *
+ * -=| Params |=-
+ *   filename: Name of the file
+ *
+ * -=| Returns |=-
+ *   type:    uint32_t*
+ *   success: returns File size
+ *   failure: returns 0
+ */
 uint32_t GetFileSize(char* filename);
 
+/* KEVIN - GetFileSizeFromEntry
+ * Gets the size of the entry. Entries can also be directories.
+ *
+ * -=| Params |=-
+ *   entry: Name of the entry
+ *
+ * -=| Returns |=-
+ *   type:    uint32_t*
+ *   success: returns Entry Size
+ *   failure: returns 0
+ */
 uint32_t GetFileSizeFromEntry(ROOT_ENTRY* entry);
 
+/* Yunhu - GetDirectorySize
+ * Runs GetDirectorySizeFromEntry on an entry.
+ *
+ * -=| Params |=-
+ *   directory: Name of the file
+ *
+ * -=| Returns |=-
+ *   type:    int
+ *   success: returns Directory Size
+ *   failure: returns 0
+ */
 int GetDirectorySize(char* directory);
 
+/* Yunhu - GetDirectorySizeFromEntry
+ * Counts all clusters in entry and returns the size of the entry.
+ *
+ * -=| Params |=-
+ *   entry: Name of the entry
+ *
+ * -=| Returns |=-
+ *   type:    int
+ *   success: returns Entry Size
+ *   failure: returns 0
+ */
 int GetDirectorySizeFromEntry(ROOT_ENTRY* entry);
 
-ROOT_ENTRY* GetRootEntry(char* filename);
-
+/* ALEX - GetFileData
+ * Runs GetRootEntry, then GetFileSize, then ReadFileContents 
+ * and reads all of that data about the target file into buffer.
+ *
+ * -=| Params |=-
+ *   targetFile: The file whose data will be gotten
+ *
+ * -=| Returns |=-
+ *   type:    char*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
 char* GetFileData(char* targetFile);
 
+/* ALI - ReadFileContents
+ * Searches through FAT to find pointers to the file's data and seeks to it to then reads 
+ * all of the data into a buffer which gets returned.
+ *
+ * -=| Params |=-
+ *   entry: Name of the entry
+ *
+ * -=| Returns |=-
+ *   type:    char*
+ *   success: returns Entry Size
+ *   failure: returns NULL
+ */
 char* ReadFileContents(ROOT_ENTRY* entry, char* buffer, int size);
 
-ROOT_DIR* g_rootDir;
-
-
-
+/* LUKE & Prof. TALLMAN - GetRootEntry
+ * Finds the first cluster of the Root Entry and reads it to find the next cluster until the final 
+ * cluster is read and the Root Entry gets returned.
+ *
+ * -=| Params |=-
+ *   targetFile: The file whose data will be gotten
+ *
+ * -=| Returns |=-
+ *   type:    char*
+ *   success: returns buffer
+ *   failure: returns NULL
+ */
+ROOT_ENTRY* GetRootEntry(char* fullDirectory);
 
 #endif
