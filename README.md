@@ -281,6 +281,8 @@ typedef struct ROOT_DIR
 } __attribute__((packed)) ROOT_DIR;
 
 ```
+
+```c
 ROOT_DIR* g_rootDir;
 FAT_BOOT* g_fatBoot;
-```c
+```
