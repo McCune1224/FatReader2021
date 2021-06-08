@@ -19,7 +19,7 @@ Stage 2 Slides:https://docs.google.com/presentation/d/1Jy8gLT9gnNBVQeR6xrf6DnacX
 # Helper Functions
 
 ```c
-[x] Luke char*FileAttributes(uint8_t): 
+[x] Luke char* FileAttributes(uint8_t): 
 
 Turns input parameter of "1 byte" into a more human friendly readable string
 
