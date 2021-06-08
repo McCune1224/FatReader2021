@@ -204,7 +204,7 @@ typedef struct _MBR
 ```
 
 ```c
-//FAT BOOT SECTOR
+///FAT BOOT SECTOR
 
 typedef struct FAT_BOOT
 {
@@ -244,7 +244,7 @@ typedef struct FAT_BOOT
 ```
 
 ```c
-//FAT TABLE
+///FAT TABLE
 
 typedef uint16_t FAT_TABLE_ENTRY;
 typedef struct FAT_TABLE
@@ -255,7 +255,7 @@ typedef struct FAT_TABLE
 
 ```c
 
-// Root Entry
+///Root Entry
 
 typedef struct ROOT_ENTRY
 {
@@ -272,7 +272,7 @@ typedef struct ROOT_ENTRY
 ```
 
 ```c
-//Root Directory
+///Root Directory
 
 typedef struct ROOT_DIR
 {
@@ -281,3 +281,6 @@ typedef struct ROOT_DIR
 } __attribute__((packed)) ROOT_DIR;
 
 ```
+ROOT_DIR* g_rootDir;
+FAT_BOOT* g_fatBoot;
+```c
