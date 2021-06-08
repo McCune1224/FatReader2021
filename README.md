@@ -9,12 +9,10 @@ Date: February 22, 2021
 Team Members:
 
 * Kevin Alonso
-* Ali Amin
+* Ali Amin <-- Final documentation and prettiness
 * Luke Frisbee
 * Alex McCune
 * Yunhu Xiang
-
-Stage 2 Slides:https://docs.google.com/presentation/d/1Jy8gLT9gnNBVQeR6xrf6DnacX1RCADLgA8syVbqInJo/edit?usp=sharing
 
 # Helper Functions
 
