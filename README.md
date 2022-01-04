@@ -2,15 +2,15 @@
 The CSC 430 class' basic implementaion of a FAT File Reader System
 
 # Design Document
-Team Lead: Luke Frisbee
+Team Lead: LukeFrisbee
 
 Date: February 22, 2021
 
 Team Members:
 
-* Kevin Alonso
-* Ali Amin
-* Luke Frisbee
+* kevin81622
+* aamindehkordi
+* LukeFrisbee
 * Alex McCune
 * Yunhu Xiang
 
